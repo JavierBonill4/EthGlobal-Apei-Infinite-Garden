@@ -87,3 +87,223 @@ td.ig-forborne {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   THE OVERWORLD
+   Camera constants live in art/manifest.json and are read by
+   web/lib/world/camera.ts. Nothing here may assume a tile size.
+   ========================================================================== */
+
+.ig-game {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.25rem;
+  align-items: start;
+  padding: 1.25rem;
+  max-width: 96rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 60rem) {
+  .ig-game { grid-template-columns: 1fr; }
+}
+
+.ig-game-head { margin-bottom: 0.75rem; }
+.ig-game-head h1 {
+  margin: 0.2rem 0 0;
+  font-size: 1.9rem;
+  letter-spacing: -0.02em;
+}
+
+/* The window onto the world. Overflow hidden is what makes it a viewport
+   rather than a very large page. */
+.ig-viewport {
+  position: relative;
+  height: min(64vh, 620px);
+  overflow: hidden;
+  border: 1px solid var(--ig-rule);
+  background: #abccd5;               /* sky, behind the ground plane's edge */
+  cursor: default;
+  outline: none;
+  touch-action: none;
+}
+
+.ig-world {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.ig-world img {
+  position: absolute;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Depth belongs to the PLANE, not to each tile: a gradient inside a tile only
+   bands the field. One overlay, fixed to the camera. */
+.ig-haze {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(120, 150, 155, 0.26) 0%,
+    rgba(120, 150, 155, 0.06) 26%,
+    rgba(120, 150, 155, 0) 52%
+  );
+}
+
+.ig-avatar { transform-origin: 0 0; }
+
+.ig-bed { transition: opacity 140ms ease; }
+
+.ig-prompt,
+.ig-note,
+.ig-help {
+  position: absolute;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, var(--ig-surface) 92%, transparent);
+  border: 1px solid var(--ig-rule);
+  padding: 0.4rem 0.6rem;
+  pointer-events: none;
+}
+
+.ig-prompt { left: 50%; bottom: 1rem; transform: translateX(-50%); }
+.ig-note { left: 50%; top: 1rem; transform: translateX(-50%); max-width: 24rem; }
+.ig-help { right: 0.75rem; bottom: 0.75rem; opacity: 0.75; }
+
+kbd {
+  font-family: ui-monospace, monospace;
+  font-size: 0.86em;
+  border: 1px solid var(--ig-rule);
+  border-bottom-width: 2px;
+  padding: 0 0.28em;
+  border-radius: 3px;
+  background: var(--ig-surface-2);
+}
+
+/* ---- HUD ---------------------------------------------------------------- */
+
+.ig-hud {
+  border: 1px solid var(--ig-rule);
+  background: var(--ig-surface);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: sticky;
+  top: 1.25rem;
+}
+
+.ig-hud-row { display: grid; grid-template-columns: auto 1fr; gap: 0.9rem; }
+.ig-stat-v { margin: 0.1rem 0 0.35rem; font-size: 1.15rem; font-weight: 600; }
+.ig-stat-v small { font-weight: 400; color: var(--ig-muted); font-size: 0.7em; }
+.ig-stat-v[data-band="thriving"] { color: var(--ig-sev-good); }
+.ig-stat-v[data-band="stressed"] { color: var(--ig-sev-warning); }
+.ig-stat-v[data-band="dying"] { color: var(--ig-sev-critical); }
+
+.ig-bar { height: 6px; background: var(--ig-surface-2); border: 1px solid var(--ig-rule); }
+.ig-bar i { display: block; height: 100%; background: var(--ig-sev-good); }
+.ig-bar-well i { background: #5c9eb4; }
+
+/* Forbearance is the headline. It is the only thing in this panel allowed to
+   be big -- see docs/DESIGN.md and the ledger's column order. */
+.ig-forborne {
+  border-top: 1px solid var(--ig-rule);
+  border-bottom: 1px solid var(--ig-rule);
+  padding: 0.75rem 0;
+}
+.ig-forborne-v {
+  margin: 0.1rem 0 0.4rem;
+  font-size: 2.6rem;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--ig-accent);
+}
+.ig-forborne-note { margin: 0; font-size: 0.82rem; color: var(--ig-muted); line-height: 1.5; }
+
+.ig-btn {
+  font: inherit;
+  font-size: 0.86rem;
+  padding: 0.5rem 0.8rem;
+  background: var(--ig-accent);
+  color: var(--ig-surface);
+  border: 1px solid var(--ig-accent);
+  cursor: pointer;
+}
+.ig-btn:hover { filter: brightness(1.08); }
+.ig-btn-quiet { background: transparent; color: var(--ig-ink); border-color: var(--ig-rule); }
+
+.ig-hud-fine { margin: 0; font-size: 0.74rem; color: var(--ig-muted); }
+
+.ig-log { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
+.ig-log li {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr auto;
+  gap: 0.5rem;
+  padding: 0.32rem 0;
+  border-bottom: 1px solid var(--ig-rule);
+}
+.ig-log li b { color: var(--ig-sev-good); font-weight: 600; }
+.ig-log li.missed b { color: var(--ig-sev-critical); }
+
+.ig-hud-ledger { max-height: 22rem; overflow: auto; }
+
+/* ---- off the plane ------------------------------------------------------ */
+
+/* The ground tips away. A challenge is not anywhere, so it must not arrive as
+   a panel floating over the garden -- see ChallengeHost. */
+.ig-plane {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(18, 26, 28, 0.72);
+  backdrop-filter: blur(2px);
+  animation: ig-plane-in 380ms cubic-bezier(0.3, 0.8, 0.25, 1) both;
+}
+
+@keyframes ig-plane-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ig-plane-card {
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  border-top: 3px solid #7e6ba8;
+  padding: 1.4rem;
+  width: min(30rem, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  animation: ig-card-in 440ms cubic-bezier(0.3, 0.8, 0.25, 1) both;
+}
+
+@keyframes ig-card-in {
+  from { transform: perspective(900px) rotateX(28deg) translateY(28px) scale(0.94); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.ig-plane-head h2 { margin: 0.2rem 0 0; font-size: 1.4rem; letter-spacing: -0.015em; }
+.ig-ch { display: flex; flex-direction: column; gap: 0.7rem; align-items: center; }
+.ig-ch-rule { margin: 0; font-size: 0.88rem; color: var(--ig-muted); text-align: center; }
+.ig-ch-svg { width: min(20rem, 74vw); height: auto; color: var(--ig-ink); display: block; }
+.ig-ch-count { margin: 0; font-family: ui-monospace, monospace; font-size: 0.76rem; color: var(--ig-muted); }
+.ig-plane-done { display: flex; flex-direction: column; gap: 0.7rem; }
+.ig-plane-big { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--ig-accent); }
+.ig-plane-done p { margin: 0; font-size: 0.88rem; color: var(--ig-muted); }
+
+@keyframes ig-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.ig-shake { animation: ig-shake 240ms ease; }
