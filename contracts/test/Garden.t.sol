@@ -6,7 +6,7 @@ import {Garden} from "../src/Garden.sol";
 import {MockRandomness} from "../src/randomness/MockRandomness.sol";
 import {WaterCurve} from "../src/libraries/WaterCurve.sol";
 import {Decay} from "../src/libraries/Decay.sol";
-import {OfflineMode, SeasonOutcome} from "../src/interfaces/IGarden.sol";
+import {IGardenEvents, OfflineMode, SeasonOutcome} from "../src/interfaces/IGarden.sol";
 
 /// @notice These test the properties that make this a dilemma rather than a
 ///         farming sim. If one starts failing, a DESIGN property has broken,
@@ -135,7 +135,7 @@ contract GardenTest is Test {
         garden.settleBegin();
 
         vm.expectEmit(true, false, false, false);
-        emit Garden.EpochSettled(1, 40, 0, 1, 2);
+        emit IGardenEvents.EpochSettled(1, 40, 0, 1, 2);
         rng.fulfil(1, 4); // REQ_MIN + 4*REQ_STEP = 40
     }
 
