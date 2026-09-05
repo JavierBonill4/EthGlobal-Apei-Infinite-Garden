@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 30" width="44" height="30" role="img" aria-label="Water trough">
+  <!-- Where a plot's water actually goes. Fills as you water; the level is
+       readable from across the garden, which is the point of drawing it at all. -->
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.4" stroke-linejoin="round">
+    <path d="M3 12 L41 12 L38 25 L6 25 Z" fill="var(--ig-w-wood,#A88355)"/>
+    <ellipse cx="22" cy="12" rx="19" ry="5.5" fill="var(--ig-w-wood-2,#7E6140)"/>
+    <ellipse cx="22" cy="12.5" rx="15.5" ry="4" fill="var(--ig-w-water,#7CBBCB)"/>
+  </g>
+  <path d="M13 12 q4 -1.6 8 0" stroke="#FFFFFF" stroke-opacity=".5" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+</svg>

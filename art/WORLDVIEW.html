@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Garden · Worldview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600&family=Karla:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#EEF2F0; --panel:#FAFCFA; --panel-2:#E4EBE8;
+    --ink:#26383A; --ink-soft:#5C7370; --hair:#C4D2CE; --hair-soft:#DCE5E2;
+    --accent:#2F7E72; --warn:#A8562F; --violet:#7E6BA8;
+    --f-display:"Fraunces",Georgia,serif;
+    --f-body:"Karla",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --f-mono:"DM Mono",ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0C1517; --panel:#131F21; --panel-2:#182629;
+    --ink:#DDE9E5; --ink-soft:#8AA29D; --hair:#2A3B3D; --hair-soft:#1F2E30;
+    --accent:#5FCDB4; --warn:#E0A177; --violet:#B9A8DC;}}
+  *{box-sizing:border-box}
+  body{margin:0;padding:0 1.25rem 5rem;background:var(--ground);color:var(--ink);
+    font-family:var(--f-body);font-size:16.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .col{max-width:44rem;margin:0 auto} .wide{max-width:74rem;margin:0 auto}
+  .masthead{padding:3rem 0 1.6rem;display:flex;flex-direction:column;gap:.8rem}
+  .eyebrow{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0}
+  h1{font-family:var(--f-display);font-variation-settings:"SOFT" 40,"WONK" 1;
+    font-size:clamp(2.3rem,6vw,3.4rem);font-weight:600;line-height:1.02;
+    letter-spacing:-.022em;margin:0}
+  .standfirst{font-family:var(--f-display);font-variation-settings:"SOFT" 30;
+    font-size:1.2rem;line-height:1.48;color:var(--ink-soft);margin:0;max-width:37rem}
+  section{padding-top:2.9rem}
+  .plate-head{display:flex;align-items:baseline;gap:1rem;border-top:1px solid var(--hair);
+    border-bottom:1px solid var(--hair-soft);padding:.55rem 0 .5rem;margin-bottom:1.3rem}
+  .plate-no{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);white-space:nowrap}
+  .plate-title{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0}
+  h2{font-family:var(--f-display);font-variation-settings:"SOFT" 40,"WONK" 1;
+    font-size:1.6rem;font-weight:600;letter-spacing:-.015em;line-height:1.2;margin:0 0 .85rem}
+  p{margin:0 0 1rem} p:last-child{margin-bottom:0} .lede{color:var(--ink-soft)}
+  /* ---- stage ---- */
+  .stage-wrap{border:1px solid var(--hair);background:#ABCCD5;overflow:hidden;position:relative}
+  @media (prefers-color-scheme:dark){.stage-wrap{background:#5C8794}}
+  #stage{position:relative;margin:0 auto;image-rendering:auto}
+  #stage img{position:absolute;display:block;pointer-events:none;user-select:none}
+  #stage .anchordot{position:absolute;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+    border-radius:50%;background:var(--warn);z-index:9999;pointer-events:none}
+  #stage .gridcell{position:absolute;border:1px dashed rgba(38,56,58,.28);pointer-events:none;z-index:9998}
+  .console{border:1px solid var(--hair);border-top:none;background:var(--panel);
+    display:flex;flex-wrap:wrap;gap:.5rem;padding:.8rem 1rem;align-items:center}
+  button.act,label.act{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.1em;
+    background:var(--panel);border:1px solid var(--hair);color:var(--ink);
+    padding:.4rem .62rem;cursor:pointer;text-transform:uppercase}
+  button.act:hover{border-color:var(--accent);color:var(--accent)}
+  button.act[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);
+    background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
+  .spacer{flex:1}
+  .readout{font-family:var(--f-mono);font-size:.62rem;color:var(--ink-soft);letter-spacing:.08em}
+  /* ---- contact sheet ---- */
+  .sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr));gap:.6rem;margin:1.2rem 0}
+  .cell{border:1px solid var(--hair);background:var(--panel);display:flex;flex-direction:column}
+  .cell .art{height:104px;display:flex;align-items:flex-end;justify-content:center;
+    padding:.5rem;background:var(--panel-2);position:relative}
+  .cell .art img{max-width:100%;max-height:92px;display:block}
+  .cell .tx{padding:.4rem .55rem;border-top:1px solid var(--hair-soft)}
+  .cell b{font-family:var(--f-mono);font-size:.62rem;font-weight:500;display:block;word-break:break-all}
+  .cell span{font-family:var(--f-mono);font-size:.55rem;color:var(--ink-soft)}
+  /* ---- misc ---- */
+  table{border-collapse:collapse;width:100%;font-size:.9rem;margin:1.1rem 0}
+  th{font-family:var(--f-mono);font-size:.61rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:500;text-align:left;padding:0 .9rem .5rem 0;
+    border-bottom:1px solid var(--hair)}
+  td{padding:.55rem .9rem .55rem 0;border-bottom:1px solid var(--hair-soft);vertical-align:top}
+  td:first-child{font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
+  .box{background:var(--panel);border:1px solid var(--hair);border-left:2px solid var(--accent);
+    padding:1.1rem 1.25rem;margin:1.3rem 0}
+  .box.warnbox{border-left-color:var(--warn)}
+  .box-label{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.5rem}
+  .warnbox .box-label{color:var(--warn)}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr));gap:.4rem;margin:1.1rem 0}
+  .sw{border:1px solid var(--hair);background:var(--panel)}
+  .sw .chip{height:34px} .sw .lb{padding:.3rem .45rem;font-family:var(--f-mono);font-size:.55rem;
+    color:var(--ink-soft);word-break:break-all}
+  footer{margin-top:3.4rem;padding-top:1.2rem;border-top:1px solid var(--hair);
+    font-size:.84rem;color:var(--ink-soft)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  .bobbing{animation:bob 2.6s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){.bobbing{animation:none}}
+</style>
+</head>
+<body>
+<header class="masthead col">
+  <p class="eyebrow">Art direction · The Garden · First model</p>
+  <h1>Worldview</h1>
+  <p class="standfirst">The camera, the tileset and one assembled scene, drawn with the actual files in <code>art/world/</code>. If a sprite floats or sinks here, its anchor in <code>manifest.json</code> is wrong — that is what this page is for.</p>
+</header>
+<main>
+
+<section class="wide">
+  <div class="plate-head" style="max-width:none">
+    <span class="plate-no">Plate I</span><h2 class="plate-title">One scene, real assets</h2>
+  </div>
+  <div class="stage-wrap"><div id="stage"></div></div>
+  <div class="console">
+    <button class="act" id="bGrid" aria-pressed="false" type="button">Tile grid</button>
+    <button class="act" id="bAnchor" aria-pressed="false" type="button">Anchors</button>
+    <button class="act" id="bBand" type="button">Cycle health</button>
+    <button class="act" id="bZoom" type="button">Zoom ×1.5</button>
+    <span class="spacer"></span>
+    <span class="readout" id="readout">band: mixed</span>
+  </div>
+  <p class="lede" style="margin-top:.9rem">Nothing here is composited by hand. The scene is a tile map plus a list of standing objects; every sprite is placed by its manifest anchor and sorted back to front by world&nbsp;y. Turn on <b>Anchors</b> and every orange dot should sit exactly where that object meets the ground.</p>
+</section>
+
+<section class="col">
+  <div class="plate-head"><span class="plate-no">Plate II</span><h2 class="plate-title">The camera</h2></div>
+  <p class="lede">The reference is the DS-era Pokémon overworld. The single most important consequence: <b>the grid is never rotated</b>. Rows run left to right, columns run away from you, and a tile is a rectangle.</p>
+  <svg viewBox="0 0 460 150" style="width:100%;height:auto;margin:1rem 0" role="img"
+       aria-label="Isometric grid versus this game's squashed square grid">
+    <g fill="none" stroke="currentColor" stroke-opacity=".5" stroke-width="1.4">
+      <g transform="translate(20,20)">
+        <path d="M60 0 L120 24 L60 48 L0 24 Z"/><path d="M120 24 L180 48 L120 72 L60 48 Z"/>
+        <path d="M0 24 L60 48 L0 72 L-60 48 Z" transform="translate(60,0)"/>
+        <path d="M60 48 L120 72 L60 96 L0 72 Z"/>
+      </g>
+      <g transform="translate(280,26)">
+        <rect x="0" y="0" width="56" height="35"/><rect x="56" y="0" width="56" height="35"/>
+        <rect x="0" y="35" width="56" height="35"/><rect x="56" y="35" width="56" height="35"/>
+        <rect x="0" y="70" width="56" height="35"/><rect x="56" y="70" width="56" height="35"/>
+      </g>
+    </g>
+    <g font-family="DM Mono, monospace" font-size="10" fill="currentColor" fill-opacity=".7"
+       text-anchor="middle" letter-spacing="1.4">
+      <text x="80" y="140">ISOMETRIC · THE ATLAS</text>
+      <text x="336" y="140">SQUARE, SQUASHED · THE WORLD</text>
+    </g>
+  </svg>
+  <table>
+    <thead><tr><th>Constant</th><th>Value</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td>tileW</td><td>64</td><td>One tile, across</td></tr>
+      <tr><td>tileH</td><td>40</td><td>The same tile in depth, after foreshortening</td></tr>
+      <tr><td>unitHeight</td><td>40</td><td>Screen pixels per world unit of height</td></tr>
+      <tr><td>pitchDegrees</td><td>51</td><td>Implied camera pitch — <code>acos(40/64)</code></td></tr>
+    </tbody>
+  </table>
+  <div class="box">
+    <span class="box-label">There is no projection matrix</span>
+    <p><code>tileH / tileW = 0.625</code> <em>is</em> the camera. Every ground asset is drawn already squashed, at 64×40, and the engine only places it. That is the deal that keeps the art authorable — you draw what you will see — and it is why changing either constant invalidates every ground tile in the folder rather than re-rendering them.</p>
+  </div>
+  <h2 style="font-size:1.15rem;margin-top:1.9rem">Things that stand up</h2>
+  <p>Anything that is not ground is a billboard: upright, full height, never squashed. Squash a tree by 0.625 and you get a rug with a tree printed on it. Depth comes from two places instead — <b>occlusion</b> (walk behind the tree and the tree wins) and the near/far post sizes baked into <code>prop-fence-v.svg</code>.</p>
+  <div class="box warnbox">
+    <span class="box-label">Why not true perspective</span>
+    <p>A real vanishing point turns tile picking, collision and hit-testing from division into ray casts, for a difference nobody perceives across a twelve-tile view. The DS games are largely doing the same trick. If the world later needs a horizon, that is a background plate, not a change to the projection.</p>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="plate-head" style="max-width:none">
+    <span class="plate-no">Plate III</span><h2 class="plate-title">Every asset in the folder</h2>
+  </div>
+  <p class="lede" style="max-width:44rem">Sorted as <code>manifest.json</code> lists them. Anything that fails to load shows as a broken frame — this sheet is the cheapest test that the manifest and the folder still agree.</p>
+  <div class="sheet" id="sheet"></div>
+  <div id="drift"></div>
+</section>
+
+<section class="col">
+  <div class="plate-head"><span class="plate-no">Plate IV</span><h2 class="plate-title">Palette</h2></div>
+  <p class="lede">The overworld palette, from <code>art/tokens.css</code>. Every asset writes its colours as <code>var(--ig-w-name, #LITERAL)</code>, so a file dropped into an <code>&lt;img&gt;</code> renders standalone and the same file inlined picks up the tokens.</p>
+  <div class="swatches" id="swatches"></div>
+  <div class="box">
+    <span class="box-label">Daylight is not a theme</span>
+    <p>The chrome follows the browser's light/dark setting. The world does not. Night should be something that happens <em>in</em> the world — an epoch, a season, a collapse — not something that happens to the browser. A garden that dims because someone changed an OS preference has told the player a lie about the game state.</p>
+  </div>
+  <div class="box warnbox">
+    <span class="box-label">The portal is deliberately ugly</span>
+    <p>Every other colour here belongs to something that grows. The portal is violet and is meant not to sit comfortably next to the beds — it is a hole in the world, and walking into one should feel slightly wrong. A later pass that makes portals blend in is a regression, not a polish.</p>
+  </div>
+</section>
+
+<footer class="col">
+  <p>First model, not a decision. Open questions the assets are dodging: no walk-cycle frames (the app bobs the sprite), no night or weather variants, no creature layer in world projection yet — the creatures in <code>art/creatures/</code> are still drawn for the flat map. See <code>art/ART.md</code>.</p>
+</footer>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var W=64, H=40;   /* MIRRORS manifest.json world.camera. See the drift check below. */
+
+  /* Assets, mirroring manifest.json. Duplicated because a file:// page cannot
+     fetch its own sibling -- so the page also DIFFS itself against the real
+     manifest whenever it is served over http, and shouts if they have drifted. */
+  var GROUND={grass:"world/tile-grass.svg",grassWorn:"world/tile-grass-worn.svg",
+    path:"world/tile-path.svg",soil:"world/tile-soil.svg",water:"world/tile-water.svg"};
+  function S(f,ax,ay,w,h){return{file:f,anchor:[ax,ay],size:[w,h]};}
+  var BEDS={thriving:S("world/bed-thriving.svg",32,28,64,48),
+    steady:S("world/bed-steady.svg",32,28,64,48),
+    stressed:S("world/bed-stressed.svg",32,28,64,48),
+    dying:S("world/bed-dying.svg",32,28,64,48),
+    wilderness:S("world/bed-wilderness.svg",32,28,64,48)};
+  var PROPS={fenceH:S("world/prop-fence-h.svg",32,22,64,26),
+    fenceV:S("world/prop-fence-v.svg",11,42,22,62),
+    fencePost:S("world/prop-fence-post.svg",8,22,16,26),
+    trough:S("world/prop-trough.svg",22,24,44,30),
+    well:S("world/prop-well.svg",40,88,80,100),
+    signpost:S("world/prop-signpost.svg",17,48,34,50),
+    tree:S("world/prop-tree.svg",38,92,76,98),
+    stone:S("world/prop-stone.svg",17,20,34,24)};
+  var PORTAL=S("world/portal.svg",34,86,68,92);
+  var AVATAR={s:S("world/avatar-s.svg",17,50,34,54),n:S("world/avatar-n.svg",17,50,34,54),
+    e:S("world/avatar-e.svg",17,50,34,54),w:S("world/avatar-w.svg",17,50,34,54)};
+
+  /* ---- the scene ---- */
+  var MAPW=13, MAPH=9;
+  /* g=grass G=worn p=path s=soil w=water */
+  var GROUNDMAP=[
+    "wwggGgggpgGgg",
+    "wwgsssggpsssg",
+    "gggsssggpsssg",
+    "ggGsssggpsssG",
+    "ppppppppppppp",
+    "ggggggggpggGg",
+    "gGggggggpgggg",
+    "ggggggggpggGg",
+    "gggggggggGggg"];
+  var GKEY={g:"grass",G:"grassWorn",p:"path",s:"soil",w:"water"};
+  var BANDS=["thriving","steady","stressed","dying"];
+  var bandMode=0;   /* 0 = mixed, else all beds forced to BANDS[bandMode-1] */
+  var zoom=1, showGrid=false, showAnchor=false;
+
+  /* Beds: [x, y, band]. Top block is yours, bottom is a neighbour's. */
+  var BEDLIST=[[3,1,"thriving"],
+               [4,1,"thriving"],
+               [5,1,"steady"],
+               [3,2,"thriving"],
+               [4,2,"steady"],
+               [5,2,"steady"],
+               [3,3,"steady"],
+               [4,3,"stressed"],
+               [5,3,"steady"],
+               [9,1,"steady"],
+               [10,1,"stressed"],
+               [11,1,"dying"],
+               [9,2,"stressed"],
+               [10,2,"dying"],
+               [11,2,"dying"],
+               [9,3,"dying"],
+               [10,3,"dying"],
+               [11,3,"dying"],
+               [2,5,"wilderness"],
+               [3,5,"wilderness"],
+               [4,5,"wilderness"],
+               [2,6,"wilderness"],
+               [3,6,"wilderness"],
+               [4,6,"wilderness"],
+               [2,7,"wilderness"],
+               [3,7,"wilderness"],
+               [4,7,"wilderness"]];
+  /* Standing props: [kind, x, y, dx, dy]. dx/dy in tiles, for edges. */
+  var PROPLIST=[
+    ["fenceH",3,1,0,-0.5],
+    ["fenceH",4,1,0,-0.5],
+    ["fenceH",5,1,0,-0.5],
+    ["fenceV",3,1,-0.5,0],
+    ["fenceV",3,2,-0.5,0],
+    ["fenceV",3,3,-0.5,0],
+    ["fenceV",5,1,0.5,0],
+    ["fenceV",5,2,0.5,0],
+    ["fenceV",5,3,0.5,0],
+    ["fencePost",3,1,-0.5,-0.5],
+    ["fencePost",5,1,0.5,-0.5],
+    ["trough",5,3,0.1,0.22],
+    ["fenceH",9,1,0,-0.5],
+    ["fenceH",10,1,0,-0.5],
+    ["fenceH",11,1,0,-0.5],
+    ["fenceV",9,1,-0.5,0],
+    ["fenceV",9,2,-0.5,0],
+    ["fenceV",9,3,-0.5,0],
+    ["fenceV",11,1,0.5,0],
+    ["fenceV",11,2,0.5,0],
+    ["fenceV",11,3,0.5,0],
+    ["fencePost",9,1,-0.5,-0.5],
+    ["fencePost",11,1,0.5,-0.5],
+    ["tree",1,2,0,0],
+    ["tree",12,6,0,0],
+    ["tree",0,7,0.2,0],
+    ["tree",6,7,0,0],
+    ["stone",7,5,0,0.1],
+    ["stone",11,8,0,0],
+    ["stone",1,8,0,0],
+    ["signpost",7,3,0.1,0.25],
+    ["well",8,4,0,0.05]];
+  var PORTALS=[[1,4],[12,4]];
+  var PLAYER={x:4,y:3.4,face:"s"};
+
+  var stage=document.getElementById("stage");
+  function render(){
+    var w=MAPW*W*zoom, h=MAPH*H*zoom+70*zoom;
+    stage.style.width=w+"px"; stage.style.height=h+"px";
+    var out=[], dots=[], grid=[];
+    /* ground first: it never occludes anything */
+    for(var y=0;y<MAPH;y++) for(var x=0;x<MAPW;x++){
+      var key=GKEY[GROUNDMAP[y].charAt(x)]||"grass";
+      out.push('<img src="'+GROUND[key]+'" alt="" style="left:'+(x*W*zoom)+'px;top:'
+        +(y*H*zoom)+'px;width:'+(W*zoom)+'px;height:'+(H*zoom)+'px;z-index:0">');
+      if(showGrid) grid.push('<div class="gridcell" style="left:'+(x*W*zoom)+'px;top:'
+        +(y*H*zoom)+'px;width:'+(W*zoom)+'px;height:'+(H*zoom)+'px"></div>');
+    }
+    /* everything that stands up, gathered then sorted back to front */
+    var items=[];
+    function push(spec,x,y,dx,dy,extra){
+      if(!spec) return;
+      var gx=(x+0.5+(dx||0))*W*zoom, gy=(y+0.5+(dy||0))*H*zoom;
+      items.push({y:y+(dy||0),spec:spec,
+        left:gx-spec.anchor[0]*zoom, top:gy-spec.anchor[1]*zoom,
+        w:spec.size[0]*zoom, h:spec.size[1]*zoom, gx:gx, gy:gy, extra:extra||""});
+    }
+    BEDLIST.forEach(function(b){
+      var band=b[2];
+      if(bandMode>0 && band!=="wilderness") band=BANDS[bandMode-1];
+      push(BEDS[band],b[0],b[1],0,0);
+    });
+    PROPLIST.forEach(function(p){ push(PROPS[p[0]],p[1],p[2],p[3],p[4]); });
+    PORTALS.forEach(function(p){ push(PORTAL,p[0],p[1],0,0.1); });
+    push(AVATAR[PLAYER.face],PLAYER.x,PLAYER.y,0,0,' class="bobbing"');
+    items.sort(function(a,b){ return a.y-b.y; });
+    items.forEach(function(it,idx){
+      out.push('<img src="'+it.spec.file+'" alt=""'+it.extra+' style="left:'+it.left.toFixed(1)
+        +'px;top:'+it.top.toFixed(1)+'px;width:'+it.w.toFixed(1)+'px;height:'+it.h.toFixed(1)
+        +'px;z-index:'+(10+idx)+'">');
+      if(showAnchor) dots.push('<div class="anchordot" style="left:'+it.gx.toFixed(1)
+        +'px;top:'+it.gy.toFixed(1)+'px"></div>');
+    });
+    stage.innerHTML=grid.join("")+out.join("")+dots.join("");
+  }
+
+  function tog(btn,get,set){
+    btn.addEventListener("click",function(){
+      set(!get()); btn.setAttribute("aria-pressed",get()?"true":"false"); render();
+    });
+  }
+  tog(document.getElementById("bGrid"),function(){return showGrid;},function(v){showGrid=v;});
+  tog(document.getElementById("bAnchor"),function(){return showAnchor;},function(v){showAnchor=v;});
+  document.getElementById("bBand").addEventListener("click",function(){
+    bandMode=(bandMode+1)%(BANDS.length+1);
+    document.getElementById("readout").textContent="band: "+(bandMode?BANDS[bandMode-1]:"mixed");
+    render();
+  });
+  document.getElementById("bZoom").addEventListener("click",function(e){
+    zoom = zoom===1?1.5:1; e.target.textContent = zoom===1?"Zoom ×1.5":"Zoom ×1"; render();
+  });
+  /* arrow keys move the gardener, which is the fastest way to check occlusion */
+  window.addEventListener("keydown",function(e){
+    var d={ArrowUp:[0,-1,"n"],ArrowDown:[0,1,"s"],ArrowLeft:[-1,0,"w"],ArrowRight:[1,0,"e"]}[e.key];
+    if(!d) return;
+    e.preventDefault();
+    PLAYER.x=Math.max(0,Math.min(MAPW-1,PLAYER.x+d[0]*0.5));
+    PLAYER.y=Math.max(0,Math.min(MAPH-1,PLAYER.y+d[1]*0.5));
+    PLAYER.face=d[2]; render();
+  });
+  render();
+
+  /* ---- contact sheet ---- */
+  var sheet=document.getElementById("sheet"), rows=[];
+  function add(name,file,size){ rows.push({name:name,file:file,size:size}); }
+  Object.keys(GROUND).forEach(function(k){ add("ground."+k,GROUND[k],[W,H]); });
+  Object.keys(BEDS).forEach(function(k){ add("beds."+k,BEDS[k].file,BEDS[k].size); });
+  Object.keys(PROPS).forEach(function(k){ add("props."+k,PROPS[k].file,PROPS[k].size); });
+  add("portal",PORTAL.file,PORTAL.size);
+  Object.keys(AVATAR).forEach(function(k){ add("avatar."+k,AVATAR[k].file,AVATAR[k].size); });
+  sheet.innerHTML=rows.map(function(r){
+    return '<div class="cell"><div class="art"><img src="'+r.file+'" alt="'+r.name+'"></div>'
+      +'<div class="tx"><b>'+r.name+'</b><span>'+r.file.replace("world/","")+' · '
+      +r.size[0]+'×'+r.size[1]+'</span></div></div>';
+  }).join("");
+
+  /* ---- drift check: this page vs the real manifest ---- */
+  fetch("manifest.json").then(function(r){ return r.ok?r.json():null; }).then(function(m){
+    if(!m||!m.world) return;
+    var bad=[];
+    if(m.world.camera.tileW!==W||m.world.camera.tileH!==H)
+      bad.push("camera tileW/tileH: manifest says "+m.world.camera.tileW+"×"
+        +m.world.camera.tileH+", this page draws "+W+"×"+H);
+    rows.forEach(function(r){
+      var parts=r.name.split("."), node=m.world[parts[0]];
+      if(!node) return;
+      var e=parts.length>1?node[parts[1]]:node;
+      if(!e) { bad.push(r.name+" is not in the manifest"); return; }
+      var f=(typeof e==="string")?e:e.file;
+      if(f!==r.file) bad.push(r.name+": manifest points at "+f+", page draws "+r.file);
+    });
+    if(bad.length) document.getElementById("drift").innerHTML=
+      '<div class="box warnbox" style="max-width:44rem"><span class="box-label">'
+      +'This page has drifted from manifest.json</span><p>'+bad.join("<br>")+'</p></div>';
+  }).catch(function(){ /* file:// -- no fetch, no check. Fine. */ });
+
+  /* ---- palette swatches, read from the real tokens ---- */
+  var NAMES=["sky","sky-2","grass","grass-2","leaf","leaf-2","path","path-2","water","water-2",
+    "soil","soil-2","bed","wood","wood-2","stone","stone-2","crop-thriving","crop-steady",
+    "crop-stressed","crop-dying","portal","portal-2","cloth","cloth-2","skin","ink"];
+  var LIT={sky:"#cfe3e9","sky-2":"#abccd5",grass:"#a6c79a","grass-2":"#93b889",leaf:"#6e9e68",
+    "leaf-2":"#4f7c50",path:"#d8cba9","path-2":"#c4b392",water:"#7cbbcb","water-2":"#5c9eb4",
+    soil:"#c8b192","soil-2":"#ab9271",bed:"#8f7756",wood:"#a88355","wood-2":"#7e6140",
+    stone:"#b9bfb6","stone-2":"#98a096","crop-thriving":"#6e9e68","crop-steady":"#8fae72",
+    "crop-stressed":"#c0a85c","crop-dying":"#a8865a",portal:"#7e6ba8","portal-2":"#b9a8dc",
+    cloth:"#3e6e86","cloth-2":"#2c4f62",skin:"#e6c6a8",ink:"#26383a"};
+  document.getElementById("swatches").innerHTML=NAMES.map(function(n){
+    return '<div class="sw"><div class="chip" style="background:'+LIT[n]+'"></div>'
+      +'<div class="lb">--ig-w-'+n+'<br>'+LIT[n]+'</div></div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>

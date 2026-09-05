@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 62" width="22" height="62" role="img" aria-label="Fence, running away">
+  <!-- A north-south run, foreshortened over one tile of depth (40px).
+       Near post is larger than the far one: that difference IS the camera. -->
+  <g stroke-linecap="round">
+    <path d="M11 22 L11 9" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="2.4"/>
+    <path d="M11 62 L11 44" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="3.6"/>
+    <path d="M11 11 L11 47" stroke="var(--ig-w-wood,#A88355)" stroke-width="2.6"/>
+    <path d="M11 17 L11 55" stroke="var(--ig-w-wood,#A88355)" stroke-width="2.2"/>
+  </g>
+</svg>

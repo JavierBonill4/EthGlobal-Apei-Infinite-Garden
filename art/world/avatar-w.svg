@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 54" width="34" height="54" role="img" aria-label="Gardener facing left (west)">
+  <!-- Avatar, facing left (west). Anchor [17,50] = the feet. Billboard: never
+       squashed by the camera, so the player stands UP out of the ground plane. -->
+  <ellipse cx="17" cy="50" rx="9" ry="3" fill="var(--ig-w-ink,#26383A)" fill-opacity=".18"/>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".6" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M13 50 L13 43" stroke="var(--ig-w-cloth-2,#2C4F62)" stroke-width="4"/>
+    <path d="M21 50 L21 43" stroke="var(--ig-w-cloth-2,#2C4F62)" stroke-width="4"/>
+    <path d="M9 44 L9 26 q8 -4 16 0 L25 44 Z" fill="var(--ig-w-cloth,#3E6E86)"/>
+    <path d="M14 30 L7 39" fill="none" stroke="var(--ig-w-cloth,#3E6E86)" stroke-width="3.4"/>
+    <circle cx="17" cy="18" r="8" fill="var(--ig-w-skin,#E6C6A8)"/>
+    <path d="M9 16 q1 -10 8 -10 q6 0 8 10 q-3 -2 -7 -2 q-5 -1 -9 2 Z" fill="#3A2E28"/>
+    <circle cx="13" cy="19" r="1.2" fill="var(--ig-w-ink,#26383A)" stroke="none"/><path d="M9 20 q-1.5 -1 0 -2.4" fill="var(--ig-w-skin,#E6C6A8)" stroke-width="1.1"/>
+  </g>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.3" stroke-linejoin="round">
+    <path d="M1 38 L9 38 L8 45 L2 45 Z" fill="var(--ig-w-stone,#B9BFB6)"/>
+    <path d="M9 40 L13 43" fill="none" stroke="var(--ig-w-stone,#B9BFB6)" stroke-width="2"/>
+  </g>
+</svg>

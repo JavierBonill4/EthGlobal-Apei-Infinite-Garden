@@ -1,6 +1,6 @@
 {
   "$comment": "The single registry of every visual asset. Drop a file in, add a line here, done. See ART.md.",
-  "version": "0.1.0-placeholder",
+  "version": "0.2.0-placeholder",
   "healthBands": {
     "$comment": "MIRRORED in contracts/src/art/PlaceholderArt.sol. Change both or the token art and the app will disagree.",
     "thriving": 700,
@@ -46,5 +46,228 @@
     "$comment": "Composited over a plot, not replacements for it.",
     "scarred": "ui/overlay-scarred.svg",
     "healed": "ui/overlay-healed.svg"
+  },
+  "world": {
+    "$comment": "The overworld tileset. Ground tiles are plain paths and fill their tile exactly. Everything that STANDS UP is an object with an anchor: the point in its own viewBox that lands on the tile's ground centre. See ART.md.",
+    "camera": {
+      "$comment": "An axis-aligned grid under a pitched camera -- NOT isometric. The grid is never rotated; rows run left to right. tileH/tileW is the whole foreshortening. Read ART.md 'The camera' before changing any of these: they are baked into every asset, not just into the engine.",
+      "tileW": 64,
+      "tileH": 40,
+      "unitHeight": 40,
+      "pitchDegrees": 51
+    },
+    "ground": {
+      "grass": "world/tile-grass.svg",
+      "grassWorn": "world/tile-grass-worn.svg",
+      "path": "world/tile-path.svg",
+      "soil": "world/tile-soil.svg",
+      "water": "world/tile-water.svg"
+    },
+    "beds": {
+      "$comment": "The PLANTING on a plot, composited over a ground tile \u2014 soil for a live band, grass for wilderness. Not a replacement for the ground.",
+      "thriving": {
+        "file": "world/bed-thriving.svg",
+        "anchor": [
+          32,
+          28
+        ],
+        "size": [
+          64,
+          48
+        ]
+      },
+      "steady": {
+        "file": "world/bed-steady.svg",
+        "anchor": [
+          32,
+          28
+        ],
+        "size": [
+          64,
+          48
+        ]
+      },
+      "stressed": {
+        "file": "world/bed-stressed.svg",
+        "anchor": [
+          32,
+          28
+        ],
+        "size": [
+          64,
+          48
+        ]
+      },
+      "dying": {
+        "file": "world/bed-dying.svg",
+        "anchor": [
+          32,
+          28
+        ],
+        "size": [
+          64,
+          48
+        ]
+      },
+      "wilderness": {
+        "file": "world/bed-wilderness.svg",
+        "anchor": [
+          32,
+          28
+        ],
+        "size": [
+          64,
+          48
+        ]
+      }
+    },
+    "props": {
+      "fenceH": {
+        "file": "world/prop-fence-h.svg",
+        "anchor": [
+          32,
+          22
+        ],
+        "size": [
+          64,
+          26
+        ]
+      },
+      "fenceV": {
+        "file": "world/prop-fence-v.svg",
+        "anchor": [
+          11,
+          42
+        ],
+        "size": [
+          22,
+          62
+        ]
+      },
+      "fencePost": {
+        "file": "world/prop-fence-post.svg",
+        "anchor": [
+          8,
+          22
+        ],
+        "size": [
+          16,
+          26
+        ]
+      },
+      "trough": {
+        "file": "world/prop-trough.svg",
+        "anchor": [
+          22,
+          24
+        ],
+        "size": [
+          44,
+          30
+        ]
+      },
+      "well": {
+        "file": "world/prop-well.svg",
+        "anchor": [
+          40,
+          88
+        ],
+        "size": [
+          80,
+          100
+        ]
+      },
+      "signpost": {
+        "file": "world/prop-signpost.svg",
+        "anchor": [
+          17,
+          48
+        ],
+        "size": [
+          34,
+          50
+        ]
+      },
+      "tree": {
+        "file": "world/prop-tree.svg",
+        "anchor": [
+          38,
+          92
+        ],
+        "size": [
+          76,
+          98
+        ]
+      },
+      "stone": {
+        "file": "world/prop-stone.svg",
+        "anchor": [
+          17,
+          20
+        ],
+        "size": [
+          34,
+          24
+        ]
+      }
+    },
+    "portal": {
+      "file": "world/portal.svg",
+      "anchor": [
+        34,
+        86
+      ],
+      "size": [
+        68,
+        92
+      ]
+    },
+    "avatar": {
+      "$comment": "One frame per facing. Walk frames are a TODO -- the app bobs the sprite instead, which is enough to read as walking and costs no art.",
+      "s": {
+        "file": "world/avatar-s.svg",
+        "anchor": [
+          17,
+          50
+        ],
+        "size": [
+          34,
+          54
+        ]
+      },
+      "n": {
+        "file": "world/avatar-n.svg",
+        "anchor": [
+          17,
+          50
+        ],
+        "size": [
+          34,
+          54
+        ]
+      },
+      "e": {
+        "file": "world/avatar-e.svg",
+        "anchor": [
+          17,
+          50
+        ],
+        "size": [
+          34,
+          54
+        ]
+      },
+      "w": {
+        "file": "world/avatar-w.svg",
+        "anchor": [
+          17,
+          50
+        ],
+        "size": [
+          34,
+          54
+        ]
+      }
+    }
   }
 }

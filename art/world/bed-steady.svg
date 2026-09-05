@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="64" height="48" role="img" aria-label="Planted row, steady — ordinary">
+  <!-- BED. ONE row of crops, composited over tile-soil.svg — it does not
+       replace the ground. Footprint is exactly one tile (y 8..48) and the
+       anchor [32,28] lands on the tile centre. One row per tile, not three:
+       a 3x3 patch is three rows deep, and packing three rows into every
+       tile turned the plot into a hedge with no soil visible. No frame
+       either — the plot edge is the fence. -->
+  <rect x="4" y="32" width="56" height="5" rx="2.5" fill="var(--ig-w-soil-2,#AB9271)" fill-opacity=".45"/>
+  <g stroke="var(--ig-w-crop-steady,#8FAE72)" stroke-width="1.7" stroke-linecap="round" fill="none">
+    <path d="M14.8 31 L17.1 19.0"/><path d="M15.3 25.0 L10.8 22.1"/><path d="M15.6 27.2 L19.4 24.3"/><circle cx="17.1" cy="18.1" r="2.2" fill="var(--ig-w-crop-steady,#8FAE72)" stroke="none"/>
+    <path d="M26.2 31 L28.6 19.0"/><path d="M26.9 25.0 L22.2 22.1"/><path d="M27.1 27.2 L30.9 24.3"/><circle cx="28.6" cy="18.1" r="2.2" fill="var(--ig-w-crop-steady,#8FAE72)" stroke="none"/>
+    <path d="M37.8 31 L40.2 19.0"/><path d="M38.4 25.0 L33.8 22.1"/><path d="M38.5 27.2 L42.4 24.3"/><circle cx="40.2" cy="18.1" r="2.2" fill="var(--ig-w-crop-steady,#8FAE72)" stroke="none"/>
+    <path d="M49.2 31 L51.7 19.0"/><path d="M49.9 25.0 L45.2 22.1"/><path d="M50.0 27.2 L53.9 24.3"/><circle cx="51.7" cy="18.1" r="2.2" fill="var(--ig-w-crop-steady,#8FAE72)" stroke="none"/>
+  </g>
+</svg>

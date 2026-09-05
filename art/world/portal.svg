@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 92" width="68" height="92" role="img" aria-label="Challenge portal">
+  <!-- A PORTAL, and the only violet in the world. Everything else in this
+       palette is something that grows; this is not, and it should not sit
+       comfortably beside the beds. Anchor [34,86].
+       The class hooks (portal-veil, portal-mote) are animated by the app, so
+       the file stays still when opened on its own. -->
+  <ellipse cx="34" cy="86" rx="22" ry="6" fill="var(--ig-w-portal,#7E6BA8)" fill-opacity=".22"/>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M6 86 L6 40 a28 30 0 0 1 56 0 L62 86 L50 86 L50 40 a16 18 0 0 0 -32 0 L18 86 Z"
+          fill="var(--ig-w-stone,#B9BFB6)"/>
+    <path class="portal-veil" d="M18 86 L18 40 a16 18 0 0 1 32 0 L50 86 Z"
+          fill="var(--ig-w-portal,#7E6BA8)" fill-opacity=".8" stroke="none"/>
+    <path d="M22 84 L22 41 a12 14 0 0 1 24 0 L46 84 Z"
+          fill="var(--ig-w-portal-2,#B9A8DC)" fill-opacity=".5" stroke="none"/>
+  </g>
+  <g class="portal-mote" fill="#FFFFFF" fill-opacity=".72">
+    <circle cx="28" cy="58" r="1.7"/><circle cx="40" cy="47" r="1.3"/>
+    <circle cx="35" cy="70" r="1.5"/><circle cx="26" cy="41" r="1.1"/>
+  </g>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="64" height="48" role="img" aria-label="Wilderness — reverted, unowned, peaceful">
+  <!-- Reverted to wilderness. Composites over GRASS, not soil: the ground has
+       gone back. An abandoned garden becomes a field, not a wreck (ART.md), and
+       the missing rows are the whole story — this is not a fifth severity. -->
+  <g stroke="var(--ig-w-leaf-2,#4F7C50)" stroke-width="1.5" stroke-linecap="round" fill="none" stroke-opacity=".78">
+    <path d="M9 40 q2 -4.2 4 -7"/><path d="M9 40 q-1.6 -3.5 -3.4 -5.6"/>
+    <path d="M18 28 q2 -6.0 4 -10"/><path d="M18 28 q-1.6 -5.0 -3.4 -8.0"/>
+    <path d="M26 43 q2 -7.8 4 -13"/><path d="M26 43 q-1.6 -6.5 -3.4 -10.4"/>
+    <path d="M36 22 q2 -4.2 4 -7"/><path d="M36 22 q-1.6 -3.5 -3.4 -5.6"/>
+    <path d="M43 36 q2 -6.0 4 -10"/><path d="M43 36 q-1.6 -5.0 -3.4 -8.0"/>
+    <path d="M52 30 q2 -7.8 4 -13"/><path d="M52 30 q-1.6 -6.5 -3.4 -10.4"/>
+    <path d="M58 42 q2 -4.2 4 -7"/><path d="M58 42 q-1.6 -3.5 -3.4 -5.6"/>
+    <path d="M13 18 q2 -6.0 4 -10"/><path d="M13 18 q-1.6 -5.0 -3.4 -8.0"/>
+    <path d="M32 33 q2 -7.8 4 -13"/><path d="M32 33 q-1.6 -6.5 -3.4 -10.4"/>
+    <path d="M47 19 q2 -4.2 4 -7"/><path d="M47 19 q-1.6 -3.5 -3.4 -5.6"/>
+    <path d="M22 36 q2 -6.0 4 -10"/><path d="M22 36 q-1.6 -5.0 -3.4 -8.0"/>
+    <path d="M56 24 q2 -7.8 4 -13"/><path d="M56 24 q-1.6 -6.5 -3.4 -10.4"/>
+  </g>
+  <g fill="var(--ig-w-crop-stressed,#C0A85C)" stroke="none" opacity=".8"><circle cx="23" cy="31" r="1.5"/><circle cx="40" cy="25" r="1.5"/><circle cx="54" cy="35" r="1.5"/></g>
+</svg>

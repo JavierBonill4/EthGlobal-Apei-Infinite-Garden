@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 24" width="34" height="24" role="img" aria-label="Stone">
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".5" stroke-width="1.3" stroke-linejoin="round">
+    <path d="M4 20 q-2 -9 7 -12 q10 -3 15 4 q5 6 1 8 Z" fill="var(--ig-w-stone,#B9BFB6)"/>
+    <path d="M9 19 q1 -7 8 -9" fill="none" stroke="var(--ig-w-stone-2,#98A096)"/>
+  </g>
+</svg>

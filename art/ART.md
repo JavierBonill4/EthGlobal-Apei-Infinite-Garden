@@ -45,6 +45,146 @@ So the assets are not decoration — they are the dashboard. Two consequences:
   coming, everyone knows something is wrong and nobody knows how wrong. That
   ambiguity is intentional — don't design a "danger" state that resolves it.
 
+
+---
+
+## The camera
+
+The reference is the **DS-era Pokémon overworld**, not an isometric map. If you
+only take one thing from this section: **the grid is never rotated.** Rows run
+left to right across the screen. Columns run away from you. A tile is a
+rectangle, not a diamond.
+
+```
+        isometric (the atlas)          this game (the world)
+             ◇ ◇ ◇                        ▭ ▭ ▭
+            ◇ ◇ ◇ ◇                       ▭ ▭ ▭
+             ◇ ◇ ◇                        ▭ ▭ ▭
+       grid rotated 45°               grid square, squashed
+```
+
+| Constant | Value | What it is |
+|---|---|---|
+| `tileW` | 64 | One tile, across |
+| `tileH` | 40 | The same tile, in depth, after foreshortening |
+| `unitHeight` | 40 | Screen pixels per world unit of *height* |
+| `pitchDegrees` | 51 | Implied camera pitch: `acos(40/64)` |
+
+`tileH / tileW = 0.625` **is** the camera. There is no projection matrix
+anywhere — every ground asset is drawn already squashed, at 64×40, and the
+engine just places it. That is the deal that keeps the art authorable: you draw
+what you will see.
+
+**Change `tileW` or `tileH` and every ground tile in this folder is wrong.**
+They are in `manifest.json` so the engine and the art agree on one number, not
+so they can be tuned casually.
+
+### Things that stand up
+
+Anything that is not ground is a **billboard**: drawn upright at full height,
+never squashed, and composited over the ground plane. A fence is as tall on
+screen as it would be if you were standing there. This is the entire reason the
+world reads as a place rather than a floor — squash a tree by 0.625 and you get
+a rug with a tree printed on it.
+
+Each standing asset declares an **anchor** in `manifest.json`: the point in its
+own viewBox that lands on the tile's ground centre. Feet, base of post, bottom
+of trough. Get the anchor wrong and the object hovers or sinks; nothing else
+about the asset matters as much.
+
+Draw order is painter's: sort by world *y*, back to front, so a player walking
+behind a tree is occluded by it. That occlusion is worth protecting — it is
+most of what sells the depth.
+
+### Two decisions worth arguing with
+
+**Why not just use the isometric atlas projection?** Because they are for
+different jobs and the project needs both. A map is *read*, from above; a place
+is *stood in*. The atlas zooms from the whole coastline down to a sector because
+nested commons only feel true if you can see the nesting. But keep zooming in on
+an isometric grid and your own patch stays a cell in a spreadsheet — you never
+arrive anywhere. The switch from atlas to world is where the game stops being
+something you administer and starts being somewhere you are, and that deserves a
+different camera, not more zoom.
+
+**Why affine and not true perspective?** Real perspective means a vanishing
+point, which means tile picking, collision and hit-testing all stop being
+division and start being ray casts — for a difference nobody perceives across a
+twelve-tile view. The DS games are largely doing the same trick. Depth cues come
+from the near/far post sizes baked into `prop-fence-v.svg` and from occlusion,
+not from the maths.
+
+---
+
+## Overworld tileset — `art/world/`
+
+Registered under `"world"` in `manifest.json`. Ground tiles are plain file
+paths; everything that stands up carries `anchor` and `size`.
+
+### Ground — 64×40, all four edges must tile
+
+| File | Notes |
+|---|---|
+| `tile-grass.svg` | The default. Mow bands give the ground a direction |
+| `tile-grass-worn.svg` | Variation. Scatter at ~1 in 4 or the field reads as wallpaper |
+| `tile-path.svg` | The lane. One tile per sector is path, not plot — matches the contract's verge |
+| `tile-soil.svg` | Bare workable ground inside a fence |
+| `tile-water.svg` | Impassable |
+
+### Beds — 64×70, anchor `[32,45]`
+
+One per health band, plus wilderness. **These are the dashboard.** A player
+should read the state of a plot across the garden without stopping, so the
+difference between bands is plant count, height, droop and colour all at once —
+not a tint. `bed-wilderness.svg` is not a fifth severity: it is nobody's plot,
+and per the rule above it reads *peaceful*.
+
+### Props
+
+| File | Anchor | Notes |
+|---|---|---|
+| `prop-well.svg` | `[36,78]` | The commons. Its `.well-water` ellipse is a separate element so the app can drop the level |
+| `prop-trough.svg` | `[22,24]` | Per-plot. Fills as you water |
+| `prop-fence-h.svg` | `[32,22]` | East–west run |
+| `prop-fence-v.svg` | `[11,42]` | North–south run. Near post larger than far — that difference *is* the camera |
+| `prop-fence-post.svg` | `[8,22]` | Corners |
+| `prop-tree.svg` | `[38,92]` | Tall enough to occlude a player |
+| `prop-signpost.svg` | `[17,48]` | |
+| `prop-stone.svg` | `[17,20]` | |
+| `portal.svg` | `[34,86]` | The only violet in the palette — see below |
+
+### Avatar — 34×54, anchor `[17,50]`
+
+`avatar-s / n / e / w`. One frame per facing; the app bobs the sprite instead of
+animating a walk cycle, which reads as walking and costs no art. Two-frame walk
+cycles are the obvious next thing to draw.
+
+### The portal is deliberately ugly here
+
+Every other colour in the overworld palette belongs to something that grows.
+The portal is violet, and it is meant not to sit comfortably beside the beds —
+it is a hole in the world, and a player should feel slightly wrong walking into
+one. If a later pass makes portals blend in, that is a regression, not a polish.
+
+---
+
+## Daylight is not a theme
+
+The UI chrome follows the browser's light/dark setting. **The world does not.**
+Switch to dark and the panels around the garden go dark while the garden stays
+in daylight.
+
+That is a position, not an oversight: night should be something that happens
+*in* the world — an epoch, a season, a collapse — not something that happens to
+the browser. A world that dims because someone changed an OS preference has told
+the player a lie about the game state.
+
+Mechanically this falls out of how the assets are written: every colour is
+`var(--ig-w-name, #LITERAL)`. Loaded through `<img>` the custom property is out
+of scope and the literal wins, which is exactly what makes files drop-in
+replaceable. Inline the same SVG and the tokens take over. Both paths are
+supported; the app uses `<img>`.
+
 ---
 
 ## States

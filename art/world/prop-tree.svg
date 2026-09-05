@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 98" width="76" height="98" role="img" aria-label="Tree">
+  <!-- Standing scenery, and the cheapest depth cue in the world: tall enough
+       to occlude a player walking behind it. Anchor [38,92]. -->
+  <ellipse cx="38" cy="92" rx="19" ry="6" fill="var(--ig-w-ink,#26383A)" fill-opacity=".15"/>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M34 92 q1 -18 -1 -30 L45 62 q1 14 3 30 Z" fill="var(--ig-w-wood-2,#7E6140)"/>
+    <path d="M8 56 q-6 -22 14 -28 q6 -19 27 -15 q21 -1 22 19 q11 13 -5 26 q-24 8 -58 -2 Z"
+          fill="var(--ig-w-leaf,#6E9E68)"/>
+    <path d="M18 46 q11 -14 27 -12" fill="none" stroke="var(--ig-w-leaf-2,#4F7C50)" stroke-opacity=".85"/>
+    <path d="M32 58 q16 -8 28 -2" fill="none" stroke="var(--ig-w-leaf-2,#4F7C50)" stroke-opacity=".6"/>
+  </g>
+</svg>

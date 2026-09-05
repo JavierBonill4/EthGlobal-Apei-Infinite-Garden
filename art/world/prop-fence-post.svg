@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 26" width="16" height="26" role="img" aria-label="Fence corner post">
+  <g stroke-linecap="round">
+    <path d="M8 22 L8 5" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="4"/>
+    <path d="M8 5.5 L8 4" stroke="var(--ig-w-wood,#A88355)" stroke-width="5"/>
+  </g>
+</svg>

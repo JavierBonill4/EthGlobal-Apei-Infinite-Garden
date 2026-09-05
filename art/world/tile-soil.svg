@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" width="64" height="40" role="img" aria-label="Tilled soil">
+  <!-- GROUND TILE. 64x40 is one world tile already foreshortened by the
+       camera (see ART.md "The camera"). Draw squashed; the engine does not
+       transform these. All four edges must tile against any other ground,
+       and nothing here may imply a light direction or the field bands. -->
+  <rect width="64" height="40" fill="var(--ig-w-soil,#C8B192)"/>
+  <g stroke="var(--ig-w-soil-2,#AB9271)" stroke-width="1.7" stroke-linecap="round" opacity=".42">
+    <path d="M5 9h21"/>
+    <path d="M33 9h25"/>
+    <path d="M3 19h17"/>
+    <path d="M27 19h22"/>
+    <path d="M9 29h23"/>
+    <path d="M39 29h21"/>
+    <path d="M14 37h24"/>
+  </g>
+</svg>

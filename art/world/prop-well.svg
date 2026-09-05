@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100" width="80" height="100" role="img" aria-label="The shared well">
+  <!-- THE WELL. The single most important object in the world: it is the
+       commons, and it is the thing that empties. It stands in the lane, never
+       on anyone's plot, because nobody owns it. Anchor [40,88].
+       `.well-water` is a separate element on purpose — the app drops its cy and
+       ry to show the level, and a low well has to be readable from across the
+       garden without a number attached to it. -->
+  <ellipse cx="40" cy="88" rx="30" ry="8" fill="var(--ig-w-ink,#26383A)" fill-opacity=".14"/>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M14 62 L14 84 A26 8 0 0 0 66 84 L66 62 Z" fill="var(--ig-w-stone-2,#98A096)"/>
+    <ellipse cx="40" cy="62" rx="26" ry="9" fill="var(--ig-w-stone,#B9BFB6)"/>
+    <ellipse cx="40" cy="62.5" rx="20" ry="6.4" fill="#1F3E48" stroke="none"/>
+    <ellipse class="well-water" cx="40" cy="64" rx="18" ry="5.4" fill="var(--ig-w-water-2,#5C9EB4)" stroke="none"/>
+    <path d="M20 64 L20 28" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M60 64 L60 28" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M40 6 L76 32 L4 32 Z" fill="var(--ig-w-wood,#A88355)"/>
+    <path d="M16 38 L64 38" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".5" stroke-width="1.3" stroke-linejoin="round">
+    <path d="M40 38 L40 47" fill="none"/>
+    <path d="M33 47 L47 47 L45 58 L35 58 Z" fill="var(--ig-w-wood,#A88355)"/>
+    <path d="M33 49 L47 49" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="1.6"/>
+  </g>
+</svg>

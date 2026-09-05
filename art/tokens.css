@@ -74,3 +74,58 @@
   --ig-sev-warning: #d8b156;
   --ig-sev-good: #6cc196;
 }
+
+/* ---------------------------------------------------------------------
+ * OVERWORLD PALETTE
+ *
+ * The world is a PLACE, not chrome. It is lit at one time of day and does
+ * not follow the UI theme -- switch to dark and the panels around the
+ * garden go dark while the garden stays in daylight. That is deliberate:
+ * a night palette should be a thing that happens IN the world (an epoch,
+ * a season, a collapse), not a thing that happens to the browser.
+ *
+ * Consequence for assets: every SVG in art/world/ writes its colours as
+ * `var(--ig-w-x, #LITERAL)`. Loaded through <img> the custom property is
+ * out of scope and the literal wins, which is what makes the assets work
+ * as drop-in files. Inline them and the tokens take over. Keep both.
+ * ------------------------------------------------------------------- */
+:root {
+  --ig-w-sky: #cfe3e9;
+  --ig-w-sky-2: #abccd5;
+
+  --ig-w-grass: #a6c79a;
+  --ig-w-grass-2: #93b889;
+  --ig-w-leaf: #6e9e68;
+  --ig-w-leaf-2: #4f7c50;
+
+  --ig-w-path: #d8cba9;
+  --ig-w-path-2: #c4b392;
+
+  --ig-w-water: #7cbbcb;
+  --ig-w-water-2: #5c9eb4;
+
+  --ig-w-soil: #c8b192;
+  --ig-w-soil-2: #ab9271;
+  --ig-w-bed: #8f7756;
+
+  --ig-w-wood: #a88355;
+  --ig-w-wood-2: #7e6140;
+  --ig-w-stone: #b9bfb6;
+  --ig-w-stone-2: #98a096;
+
+  /* Crops, by health band. Mirrors manifest.json healthBands. */
+  --ig-w-crop-thriving: #6e9e68;
+  --ig-w-crop-steady: #8fae72;
+  --ig-w-crop-stressed: #c0a85c;
+  --ig-w-crop-dying: #a8865a;
+
+  /* Deliberately outside the natural palette. A portal is not of this world. */
+  --ig-w-portal: #7e6ba8;
+  --ig-w-portal-2: #b9a8dc;
+
+  --ig-w-cloth: #3e6e86;
+  --ig-w-cloth-2: #2c4f62;
+  --ig-w-skin: #e6c6a8;
+
+  --ig-w-ink: #26383a;
+}

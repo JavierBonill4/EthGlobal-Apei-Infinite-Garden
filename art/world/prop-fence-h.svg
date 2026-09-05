@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 26" width="64" height="26" role="img" aria-label="Fence, running across">
+  <!-- A fence run along an east-west edge. Anchor [32,22] is the ground line.
+       The fence is the plot boundary you can SEE — ownership legible without a label. -->
+  <g stroke="var(--ig-w-ink,#26383A)" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round">
+    <path d="M4 22 L4 6" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="3.4"/>
+    <path d="M32 22 L32 7" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="3"/>
+    <path d="M60 22 L60 6" stroke="var(--ig-w-wood-2,#7E6140)" stroke-width="3.4"/>
+    <path d="M2 10 L62 10" stroke="var(--ig-w-wood,#A88355)" stroke-width="2.8"/>
+    <path d="M2 17 L62 17" stroke="var(--ig-w-wood,#A88355)" stroke-width="2.4"/>
+  </g>
+</svg>
