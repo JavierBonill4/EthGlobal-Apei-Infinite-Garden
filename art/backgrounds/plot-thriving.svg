@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Plot, lush">
+  <!-- PLACEHOLDER. Replace me. Edges must tile against any other plot state. -->
+  <rect width="160" height="160" fill="var(--ig-band-thriving, #CFE3D4)"/>
+  <rect x="0.5" y="0.5" width="159" height="159" fill="none"
+        stroke="var(--ig-rule, #C6CEC6)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="80" y="76" text-anchor="middle" font-family="monospace" font-size="11"
+        fill="var(--ig-muted, #5A675F)">THRIVING</text>
+  <text x="80" y="94" text-anchor="middle" font-family="monospace" font-size="8"
+        fill="var(--ig-muted, #5A675F)" opacity="0.7">PLACEHOLDER</text>
+</svg>

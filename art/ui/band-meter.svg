@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" role="img" aria-label="Extraction band">
+  <!-- PLACEHOLDER, and the hardest asset in the set.
+       Both edges of the safe band are UNKNOWN to players. This must express
+       uncertainty, not a crisp boundary. Soft edges, not hard lines.
+       See docs/DESIGN.md section 02. -->
+  <rect x="8" y="20" width="96" height="24" fill="currentColor" opacity="0.10"/>
+  <rect x="104" y="20" width="120" height="24" fill="var(--ig-accent, #12756A)" opacity="0.18"/>
+  <rect x="224" y="20" width="88" height="24" fill="var(--ig-sev-critical, #8C2F3D)" opacity="0.18"/>
+  <line x1="104" y1="14" x2="104" y2="50" stroke="var(--ig-ink, #14201B)" stroke-dasharray="3 3" opacity="0.5"/>
+  <line x1="224" y1="14" x2="224" y2="50" stroke="var(--ig-ink, #14201B)" stroke-dasharray="3 3" opacity="0.5"/>
+  <text x="104" y="11" text-anchor="middle" font-family="monospace" font-size="9" fill="var(--ig-muted, #5A675F)">?</text>
+  <text x="224" y="11" text-anchor="middle" font-family="monospace" font-size="9" fill="var(--ig-muted, #5A675F)">?</text>
+  <polygon points="184,52 192,52 188,60" fill="var(--ig-ink, #14201B)"/>
+  <text x="160" y="38" text-anchor="middle" font-family="monospace" font-size="8" fill="var(--ig-muted, #5A675F)">PLACEHOLDER</text>
+</svg>

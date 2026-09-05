@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Garden — Design Document</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #E8ECE7;
+    --surface: #FAFBF9;
+    --surface-2: #EFF2ED;
+    --ink: #14201B;
+    --muted: #5A675F;
+    --rule: #C6CEC6;
+    --rule-soft: #DCE2DA;
+    --accent: #12756A;
+    --sev-critical: #8C2F3D;
+    --sev-open: #8E6710;
+    --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+    --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F1512; --surface: #171F1B; --surface-2: #1C2521;
+      --ink: #E3EAE4; --muted: #8D9C93; --rule: #2C3A33; --rule-soft: #232E29;
+      --accent: #56C4AE; --sev-critical: #E28C98; --sev-open: #D8B156;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1512; --surface: #171F1B; --surface-2: #1C2521;
+    --ink: #E3EAE4; --muted: #8D9C93; --rule: #2C3A33; --rule-soft: #232E29;
+    --accent: #56C4AE; --sev-critical: #E28C98; --sev-open: #D8B156;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--font-body); font-size: 17px; line-height: 1.65;
+    margin: 0; padding: 0 1.25rem 6rem; -webkit-font-smoothing: antialiased;
+  }
+  .col { max-width: 44rem; margin: 0 auto; }
+  .wide { max-width: 58rem; margin: 0 auto; }
+
+  .masthead {
+    border-bottom: 1px solid var(--rule); padding: 3.5rem 0 2rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+  }
+  h1 {
+    font-family: var(--font-display); font-size: clamp(2.3rem, 6vw, 3.4rem);
+    font-weight: 600; line-height: 1.04; letter-spacing: -0.02em;
+    text-wrap: balance; margin: 0;
+  }
+  .standfirst {
+    font-family: var(--font-display); font-size: 1.28rem; line-height: 1.5;
+    color: var(--muted); margin: 0; max-width: 34rem;
+  }
+
+  section { padding-top: 3rem; }
+  h2 {
+    font-family: var(--font-display); font-size: 1.75rem; font-weight: 600;
+    letter-spacing: -0.015em; line-height: 1.2; text-wrap: balance; margin: 0 0 1.1rem;
+  }
+  h3 {
+    font-family: var(--font-display); font-size: 1.22rem; font-weight: 600;
+    line-height: 1.3; letter-spacing: -0.01em; text-wrap: balance; margin: 1.9rem 0 0.6rem;
+  }
+  p { margin: 0 0 1.05rem; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .rule-label {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted);
+    border-top: 1px solid var(--rule); padding-top: 0.6rem;
+    margin: 0 0 1.5rem; display: block;
+  }
+  ul, ol { margin: 0 0 1.05rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.45rem; }
+  li:last-child { margin-bottom: 0; }
+  ul:last-child, ol:last-child { margin-bottom: 0; }
+  code {
+    font-family: var(--font-mono); font-size: 0.86em;
+    background: var(--surface-2); border: 1px solid var(--rule-soft); padding: 0.06em 0.32em;
+  }
+
+  .toc { background: var(--surface); border: 1px solid var(--rule); padding: 1.4rem 1.5rem; margin-top: 2.5rem; }
+  .toc ol {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.35rem 2rem;
+  }
+  .toc li { margin: 0; font-size: 0.94rem; display: flex; gap: 0.6rem; }
+  .toc .n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .pillars { display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+  .pillar { border-bottom: 1px solid var(--rule-soft); padding: 1rem 0; display: grid; grid-template-columns: 2.2rem 1fr; gap: 0.9rem; }
+  .pillar .n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); padding-top: 0.28rem; }
+  .pillar p { margin: 0; }
+
+  .box { background: var(--surface); border: 1px solid var(--rule); padding: 1.35rem 1.45rem; margin: 1.4rem 0; }
+  .box-label {
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.55rem;
+  }
+  .box.warn { border-left: 2px solid var(--sev-critical); }
+  .box.warn .box-label { color: var(--sev-critical); }
+  .box.open { border-left: 2px solid var(--sev-open); }
+  .box.open .box-label { color: var(--sev-open); }
+  .box p:last-child { margin-bottom: 0; }
+
+  .table-wrap { overflow-x: auto; margin: 1.2rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.94rem; min-width: 32rem; }
+  th {
+    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+    text-align: left; padding: 0 0.9rem 0.55rem 0; border-bottom: 1px solid var(--rule);
+  }
+  td { padding: 0.65rem 0.9rem 0.65rem 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; line-height: 1.45; }
+  td:first-child { white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .mono { font-family: var(--font-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+  figure { margin: 1.5rem 0 0; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 0.88rem; color: var(--muted); line-height: 1.5; margin-top: 1rem; max-width: 44rem; }
+  .dg-node { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
+  .dg-node-accent { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.25; }
+  .dg-label { fill: var(--ink); font-family: var(--font-body); font-size: 13px; font-weight: 500; }
+  .dg-sub { fill: var(--muted); font-family: var(--font-mono); font-size: 10.5px; }
+  .dg-arc { fill: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+  .dg-arc-accent { fill: var(--accent); font-family: var(--font-mono); font-size: 11px; }
+  .dg-arc-crit { fill: var(--sev-critical); font-family: var(--font-mono); font-size: 11px; }
+  .dg-edge { fill: none; stroke: currentColor; stroke-width: 1.4; opacity: 0.5; }
+  .dg-edge-accent { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+  .dg-edge-crit { fill: none; stroke: var(--sev-critical); stroke-width: 1.6; stroke-dasharray: 5 3; }
+  .dg-head { fill: currentColor; opacity: 0.5; }
+  .dg-head-accent { fill: var(--accent); }
+  .dg-head-crit { fill: var(--sev-critical); }
+  .zone-dead { fill: currentColor; opacity: 0.09; }
+  .zone-good { fill: var(--accent); opacity: 0.16; }
+  .zone-bad { fill: var(--sev-critical); opacity: 0.16; }
+  .zone-stroke { fill: none; stroke: var(--rule); stroke-width: 1; }
+  .bound { stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.55; }
+  .zone-title { fill: var(--ink); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; }
+
+  footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); font-size: 0.86rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="masthead col">
+  <p class="eyebrow">Design document &middot; v0.2 &middot; working title</p>
+  <h1>The Garden</h1>
+  <p class="standfirst">A shared world that everyone tends and anyone can ruin, growing from a garden into a civilization. You never win it. You continue it, for as long as the community can hold the line &mdash; and it will break.</p>
+</header>
+
+<nav class="toc col" aria-label="Contents">
+  <ol>
+    <li><span class="n">01</span><a href="#pillars">Design pillars</a></li>
+    <li><span class="n">02</span><a href="#corridor">The corridor</a></li>
+    <li><span class="n">03</span><a href="#eras">Eras</a></li>
+    <li><span class="n">04</span><a href="#garden">Plots and sectors</a></li>
+    <li><span class="n">05</span><a href="#resources">The three resources</a></li>
+    <li><span class="n">06</span><a href="#creatures">Creatures</a></li>
+    <li><span class="n">07</span><a href="#collectibles">Collectibles</a></li>
+    <li><span class="n">08</span><a href="#standing">Standing</a></li>
+    <li><span class="n">09</span><a href="#voting">Voting</a></li>
+    <li><span class="n">10</span><a href="#failure">Failure</a></li>
+    <li><span class="n">11</span><a href="#threats">Threats and defence</a></li>
+    <li><span class="n">12</span><a href="#levels">Levels and continuing play</a></li>
+    <li><span class="n">13</span><a href="#entry">Entry and Sybil</a></li>
+    <li><span class="n">14</span><a href="#stewardship">Stewardship</a></li>
+    <li><span class="n">15</span><a href="#technical">Technical spine</a></li>
+    <li><span class="n">16</span><a href="#ostrom">Ostrom mapping</a></li>
+    <li><span class="n">17</span><a href="#naming">Naming and IP</a></li>
+    <li><span class="n">18</span><a href="#open">Open questions</a></li>
+    <li><span class="n">19</span><a href="#build">Build order</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="pillars" class="col">
+  <span class="rule-label">01 &mdash; Design pillars</span>
+  <h2>The constraints every decision answers to</h2>
+  <p>These are fixed. Where a mechanic conflicts with one of them, the mechanic changes.</p>
+  <div class="pillars">
+    <div class="pillar"><span class="n">P1</span><p><strong>No player can win alone.</strong> No personal progression ladder, no accumulating power, no path a clever individual can optimise toward victory. The world advances collectively or not at all.</p></div>
+    <div class="pillar"><span class="n">P2</span><p><strong>Standing buys trust, not power.</strong> A good reputation confers no mechanical advantage. Its only value is that other players choose to work with you.</p></div>
+    <div class="pillar"><span class="n">P3</span><p><strong>Nobody knows where the line is.</strong> Players can watch conditions worsen. They cannot know which epoch breaks it.</p></div>
+    <div class="pillar"><span class="n">P4</span><p><strong>Failure is designed, not accidental.</strong> The world will collapse many times. The design's job is to make collapse meaningful, survivable, and worth returning from.</p></div>
+    <div class="pillar"><span class="n">P5</span><p><strong>Greed is rational.</strong> The selfish choice must genuinely pay. A dilemma where cooperation is obviously correct is not a dilemma.</p></div>
+    <div class="pillar"><span class="n">P6</span><p><strong>Both extremes fail.</strong> Taking too much kills the world. Taking too little stalls it. The community's job is to find and hold a band nobody has published.</p></div>
+  </div>
+</section>
+
+<section id="corridor" class="wide">
+  <span class="rule-label">02 &mdash; The corridor</span>
+  <figure>
+    <svg viewBox="0 0 960 275" role="img" aria-label="A horizontal bar showing garden-wide extraction rate per epoch, divided into three zones. On the left, stagnation: plots stall, tiers never unlock and the level times out. In the middle, the band, where tiers unlock and rare creatures arrive. On the right, depletion: stress rises and a collapse roll happens every epoch. The two boundaries are drawn as dashed lines marked with question marks because their positions are never published. Above the bar, one arrow shows each player's private incentive pushing right toward depletion and another shows collective caution pulling left toward stagnation.">
+      <defs>
+        <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon class="dg-head" points="0,1 10,5 0,9"/></marker>
+        <marker id="h2c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon class="dg-head-crit" points="0,1 10,5 0,9"/></marker>
+      </defs>
+
+      <text class="dg-sub" x="480" y="22" text-anchor="middle">GARDEN-WIDE EXTRACTION RATE, PER EPOCH</text>
+
+      <path class="dg-edge" d="M 440 72 L 250 72" marker-end="url(#h2)"/>
+      <text class="dg-arc" x="345" y="60" text-anchor="middle">collective caution pulls left</text>
+
+      <path class="dg-edge-crit" d="M 520 72 L 710 72" marker-end="url(#h2c)"/>
+      <text class="dg-arc-crit" x="615" y="60" text-anchor="middle">private incentive pushes right</text>
+
+      <polygon class="dg-head" points="594,128 606,128 600,138"/>
+      <text class="dg-sub" x="600" y="119" text-anchor="middle">NOW</text>
+
+      <rect class="zone-dead" x="60" y="142" width="260" height="60"/>
+      <rect class="zone-good" x="320" y="142" width="340" height="60"/>
+      <rect class="zone-bad" x="660" y="142" width="240" height="60"/>
+      <rect class="zone-stroke" x="60" y="142" width="840" height="60"/>
+
+      <line class="bound" x1="320" y1="130" x2="320" y2="214"/>
+      <line class="bound" x1="660" y1="130" x2="660" y2="214"/>
+      <text class="dg-arc" x="320" y="124" text-anchor="middle">?</text>
+      <text class="dg-arc" x="660" y="124" text-anchor="middle">?</text>
+
+      <text class="zone-title" x="190" y="178" text-anchor="middle">STAGNATION</text>
+      <text class="zone-title" x="490" y="178" text-anchor="middle">THE BAND</text>
+      <text class="zone-title" x="780" y="178" text-anchor="middle">DEPLETION</text>
+
+      <text class="dg-arc" x="190" y="234" text-anchor="middle">plots stall, tiers stay locked</text>
+      <text class="dg-arc" x="190" y="250" text-anchor="middle">the level times out</text>
+      <text class="dg-arc-accent" x="490" y="234" text-anchor="middle">tiers unlock, rare creatures</text>
+      <text class="dg-arc-accent" x="490" y="250" text-anchor="middle">arrive, the world advances</text>
+      <text class="dg-arc-crit" x="780" y="234" text-anchor="middle">stress rises, collapse</text>
+      <text class="dg-arc-crit" x="780" y="250" text-anchor="middle">rolled every epoch</text>
+    </svg>
+    <figcaption>The whole game in one picture. Both directions lead to a failure, the safe middle is narrow, and the two dashed boundaries are never published &mdash; players infer where they are from the state of the world, and they are often wrong. This is why the design is not a morality play: restraint is not automatically virtuous, and someone has to be willing to push toward the right-hand edge or nothing ever grows.</figcaption>
+  </figure>
+</section>
+
+<section id="eras" class="col">
+  <span class="rule-label">03 &mdash; Eras</span>
+  <h2>Garden to civilization</h2>
+  <p>The garden is where it starts, not where it goes. Each era adds one new <em>system</em> rather than bigger numbers, and each era's dangers scale with what the previous one built.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Era</th><th>Adds</th><th>Danger</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">I &mdash; Garden</td><td>Plots, water, nutrients, creatures, sectors</td><td>Drought, blight, neglect</td></tr>
+        <tr><td class="mono">II &mdash; Grove</td><td>Structures, seasons, the first roaming threats</td><td>Boars, locusts &mdash; nuisances that damage plots</td></tr>
+        <tr><td class="mono">III &mdash; Settlement</td><td>Shared infrastructure, sector specialisation</td><td>Raids, fire &mdash; threats that target what you built</td></tr>
+        <tr><td class="mono">IV &mdash; Civilization</td><td>Trade between sectors, monuments</td><td>Dragons &mdash; existential, require mass mobilisation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Threats are a consequence of success, not a random event.</strong> A larger, richer world attracts larger predators. Growth carries its own danger, which reinforces the corridor and puts a natural ceiling on runaway expansion. Nobody sends a dragon at a struggling garden.</p>
+
+  <div class="box open">
+    <span class="box-label">Scope discipline</span>
+    <p>Design Era I completely. Sketch Era II. Leave III and IV as stated direction only. The dragon is the fun part to design and the wrong part to build &mdash; if the bee does not work, nothing downstream of it will.</p>
+  </div>
+</section>
+
+<section id="garden" class="col">
+  <span class="rule-label">04 &mdash; Plots and sectors</span>
+  <h2>Nested commons</h2>
+  <p>Every player owns and is responsible for one plot, allocated deterministically at join, so the map is a record of who arrived and when.</p>
+
+  <h3>Sectors</h3>
+  <p>Plots sit in <strong>sectors of six to eight neighbours</strong>, and adjacency matters mechanically: yield and creature attraction depend partly on what your neighbours planted. A contiguous run of flowering plots draws pollinators that the same plots scattered across the map would not.</p>
+  <p>This is the highest-leverage structural addition in the design, because it makes coordination tractable. A garden of a thousand strangers is far too large for anyone to negotiate with. A sector of seven is exactly the size at which real cooperation happens &mdash; you learn their names, you notice when one goes quiet, you cover for them. The garden-wide commons then gets negotiated <em>between sectors</em> rather than among a thousand individuals.</p>
+  <p>It also gives the social layer a home. Your sector is who you talk to; the garden is who you argue with.</p>
+
+  <h3>Area tracks work, not signups</h3>
+  <p class="mono">worldArea = f(tendedPlots over trailing 3 epochs)</p>
+  <p>If area ratcheted up with every signup while the labour to tend it fluctuated, collapse would stop being emergent and become arithmetic on a timer &mdash; and anyone could kill the world by minting a swarm and walking away.</p>
+
+  <h3>Wilderness reversion</h3>
+  <p>A plot untended for <code>K</code> epochs reverts to wilderness. It leaves the area and its decay burden leaves with it. The world contracts when the community shrinks, which is survivable and thematically right: an abandoned garden becomes a field, not a ruin.</p>
+  <p>Reversion is also what makes the tended plot the unit of account for everything else &mdash; resources, voting weight, collectible eligibility all attach to a tended plot rather than to an address. That one decision makes most attacks on this game indistinguishable from playing it well.</p>
+</section>
+
+<section id="resources" class="col">
+  <span class="rule-label">05 &mdash; The three resources</span>
+  <h2>Different shapes of scarcity</h2>
+  <p>Three shared resources, deliberately not variations on the same mechanic. Each creates a different kind of pressure.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Resource</th><th>Axis</th><th>Shape</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Water</strong></td><td>Sustaining</td><td>One-sided commons. More for you is less for everyone. A floor only.</td></tr>
+        <tr><td><strong>Nutrients</strong></td><td>Growth</td><td>Two-sided. Too little stalls the world; too much depletes the soil. A floor <em>and</em> a ceiling.</td></tr>
+        <tr><td><strong>Creatures</strong></td><td>Emergent</td><td>Not extracted at all &mdash; attracted. Rivalrous by location, so competition without depletion.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Water: the tragedy axis</h3>
+  <p>The reservoir refills a fixed amount each epoch; each tended plot draws a standard allocation; anyone may take more. This is the classic commons, and it is one-sided &mdash; restraint is always safe here. Water is what makes the world <em>survive</em>.</p>
+
+  <h3>Nutrients: the corridor axis</h3>
+  <p>Nutrients are drawn from shared soil and planted into feed, grass and flowers. Take too many and the soil depletes, feeding stress. Take too few and your plot stagnates, the sector produces nothing worth visiting, and <strong>the world cannot advance a tier at all.</strong> Nutrients are what make the world <em>grow</em>.</p>
+
+  <div class="box">
+    <span class="box-label">Why this changes everything</span>
+    <p>With water alone, the moral arc of the game is <em>greed bad, restraint good</em>, which is preachy and, worse, solved: a community that all agreed to take nothing would be safe forever.</p>
+    <p>With a corridor, that community starves. Somebody has to push toward the dangerous edge or the world never advances, which means <strong>the garden needs volunteers to carry risk on its behalf.</strong> That player looks identical to a reckless extractor in the ledger. The community cannot tell a pioneer from a parasite from the numbers alone &mdash; they have to argue about it, with incomplete information, every epoch.</p>
+    <p>That ambiguity is the richest thing in the design. Protect it. Do not add a mechanic that tells players which one someone was.</p>
+  </div>
+
+  <h3>The band moves</h3>
+  <p>The safe band is not a constant. It narrows as the world grows, shifts with seasons and tier, and tightens when stress is already high from another source. So a community that learned the right rate in Era I will be wrong in Era II, and the knowledge that has to be transferred to newcomers is knowledge that keeps expiring. This is the mechanical reason veterans matter, and it confers no power on them.</p>
+</section>
+
+<section id="creatures" class="col">
+  <span class="rule-label">06 &mdash; Creatures</span>
+  <h2>What you cannot take</h2>
+  <p>Creatures are the third resource and behave unlike the other two. You cannot draw a bee. You can only make a place worth visiting, and then compete for a visit &mdash; a creature is in one plot at a time, so there is rivalry without depletion.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Class</th><th>Requires</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>Common</td><td>Local: what you planted</td><td>Bees, butterflies, rabbits</td></tr>
+        <tr><td>Uncommon</td><td>Sector: adjacency and biodiversity across neighbours</td><td>Herons, foxes, glowmoths</td></tr>
+        <tr><td>Rare</td><td>World: sustained conditions over many epochs</td><td>Cranes, white stags</td></tr>
+        <tr><td>Mythical</td><td>World <em>and</em> sector <em>and</em> a specific local configuration</td><td>Turtle-ducks, moss lions, lantern foxes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Mythical creatures are the source of the rarest collectibles, and their requirements are the mechanism by which collective restraint pays out to individuals. Nobody can farm a turtle-duck. Its arrival requires a world in good condition, a sector that coordinated, and one player who planted the right thing in the right place &mdash; and that last part is skill and luck, not accumulation.</p>
+
+  <div class="box">
+    <span class="box-label">Creatures are the dashboard</span>
+    <p>The most important thing creatures do is make the world's health <em>visible without a number</em>. You do not read that stress is at 0.71. You notice the herons have gone.</p>
+    <p>This is far better feedback than any meter, and it fits P3 exactly: players can see things worsening and still not know where the line is. When the mythicals stop coming, everyone knows something is wrong, and nobody knows how wrong.</p>
+  </div>
+</section>
+
+<section id="collectibles" class="col">
+  <span class="rule-label">07 &mdash; Collectibles</span>
+  <h2>What you grew, not how you played</h2>
+  <p>Collectibles are minted as you go, soulbound and frozen until a level completes. The critical design decision is what they encode.</p>
+
+  <div class="box">
+    <span class="box-label">The decoupling</span>
+    <p><strong>The collectible records what you grew. The standing record records how you behaved.</strong> Two separate objects, deliberately.</p>
+    <p>A magnificent orchid is a magnificent orchid. A patient player and a reckless one can both grow one &mdash; at different speeds, carrying different risk &mdash; so the object itself is honestly ambiguous about method. Someone holding it later sees a beautiful thing and would have to go look up your record to learn how you played.</p>
+  </div>
+
+  <p>This is the achievable version of "it should not be known that it was obtained greedily." What is <em>not</em> achievable is hiding it outright: on-chain history is permanent and indexed, so metadata that stops displaying something does not remove the information, and anyone can reconstruct the full mint history in an afternoon. Shielded state could genuinely hide it, but that means private game state from the start, which is a different project. Decoupling gets you most of what you wanted, honestly, at no cost.</p>
+
+  <h3>Scars mark the era, not the player</h3>
+  <p>When the world collapses, every collectible minted during that level is marked. Not as punishment &mdash; as provenance. The whole cohort carries the failure they were part of, which fits P1 far better than singling individuals out, and avoids defacing one player's property over a collective outcome.</p>
+  <p>The next completion <strong>heals every scar</strong>. And a healed scar should be rarer and more valuable than no scar at all, because carrying one means the holder survived a collapse <em>and</em> stayed through to a completion. That rewards precisely the behaviour the game most needs and cannot otherwise incentivise: coming back after losing.</p>
+
+  <div class="box warn">
+    <span class="box-label">Trade-off, accepted knowingly</span>
+    <p>Making scars collective removes their bite as a deterrent against individual greed. That pressure now lives entirely in the standing record, in the tier gating that makes rare collectibles unmintable when the world is over-drawn, and in social enforcement.</p>
+    <p>This is the right trade. Defacing someone's token over a collective outcome was always heavy-handed, and under the corridor model the "greedy" player may well have been the one who kept the world moving.</p>
+  </div>
+
+  <h3>The unlock</h3>
+  <p>On level completion every collectible unlocks at once &mdash; soulbound becomes transferable. Everyone present benefits, because that is what a public good is. What you hold depends on what you grew; nobody is excluded, and a better haul confers no advantage in play. <em>Rewards can be unequal. Powers cannot.</em></p>
+</section>
+
+<section id="standing" class="col">
+  <span class="rule-label">08 &mdash; Standing</span>
+  <h2>A record, not a score</h2>
+  <p>One soulbound token per player, never revoked, never transferable, but <strong>mutable</strong> &mdash; an on-chain SVG that redraws as the record changes. Water left against water taken. Nutrients drawn in each epoch's context. Plots tended that were not yours. Epochs present. Where you stood at each collapse and what you did in the window before it. Defences joined. Voting power surrendered.</p>
+  <p>Deliberately not a number. A single score invites leaderboard optimisation, which is the individual-progression trap P1 rules out. A legible multi-dimensional record invites <em>judgement</em> instead, and there is nothing to game because there is no target.</p>
+  <p>It must also stay honestly ambiguous. Under the corridor model, a heavy nutrient draw is not evidence of anything on its own &mdash; it might have been the reason the tier unlocked. The record shows what happened and lets players argue about what it meant. It should never adjudicate.</p>
+
+  <h3>Standing has no mechanical power</h3>
+  <p>No better soil, no larger plot, no earlier access, no combat bonus. Its entire value flows through other players' choices, which requires the game to contain decisions where you depend on a specific person and choose who:</p>
+  <ul>
+    <li>Who you cede your plot to when you step away</li>
+    <li>Who you delegate voting weight to</li>
+    <li>Who your sector coordinates its planting with</li>
+    <li>Who you sponsor into the game (see <a href="#entry">13</a>)</li>
+    <li>Who the garden rallies behind when a threat arrives (see <a href="#threats">11</a>)</li>
+  </ul>
+
+  <h3>Weight it toward recent behaviour</h3>
+  <p>Otherwise you have built the eBay feedback attack: farm a clean history cheaply, then spend it on one large betrayal at the moment it hurts most. Recent conduct should dominate the display, and volatility should be visible &mdash; steady conduct reads differently from a sudden change, and that difference is information other players need.</p>
+</section>
+
+<section id="voting" class="col">
+  <span class="rule-label">09 &mdash; Voting</span>
+  <h2>Power earned by work, and the trap that creates</h2>
+  <p>Voting power is not granted at entry. It accrues from work done on the world. Multiplying accounts does not multiply it, because the work is the cost and the work is real either way.</p>
+  <p>Each epoch there is one binding collective choice: the surplus goes to <strong>Expansion</strong> or <strong>Resilience</strong>. Miss quorum and it evaporates &mdash; strictly the worst of the three outcomes, so apathy has a price and "the community can't agree" becomes a state the contract can read.</p>
+  <p>The corridor is what makes this vote genuinely hard. Under a one-sided commons, Resilience was obviously the safe choice and the vote was theatre. Now Expansion is how the world advances and Resilience is how it stalls, and both can kill you. There is a real argument to have, with real people on both sides who are not wrong.</p>
+
+  <div class="box">
+    <span class="box-label">The trap</span>
+    <p>Voting power comes from work, so the players keeping the world alive are the ones pushing it toward the concentration failure. There is no villain: the failure mode is generated by virtue. The hardest workers become the danger, and the only remedy is that they give something up.</p>
+  </div>
+
+  <h3>Concentration as a failure condition</h3>
+  <p>Measure with Herfindahl-Hirschman over voting power &mdash; one number, publishable as a rising dial, public formula. The breaking point is not fixed; concentration feeds stress like everything else (see <a href="#failure">10</a>).</p>
+
+  <h3>Sacrifice</h3>
+  <p>A player can permanently burn their own voting power. It is the only purely altruistic act in the game &mdash; costly, verifiable, zero upside &mdash; and should be a first-class event: announced, recorded permanently, weighted heavily on the record.</p>
+  <p>Make it <em>pledgeable</em>: declare intent to burn, executing at epoch end, conditional on others doing the same. <em>I burn twenty percent if three others do.</em> That turns sacrifice into a coordination primitive and gives the social layer something concrete to organise around.</p>
+
+  <div class="box open">
+    <span class="box-label">Known hole</span>
+    <p>HHI catches concentration across accounts but not a cartel of ten genuine players who always vote together. Measuring vote <em>correlation</em> across epochs rather than holdings would catch it. A v2 problem, but know it is there before someone finds it.</p>
+  </div>
+</section>
+
+<section id="failure" class="col">
+  <span class="rule-label">10 &mdash; Failure</span>
+  <h2>Hide the roll, not the rules</h2>
+  <p>P3 says nobody knows where the line is. On Ethereum you cannot simply have a secret: storage is readable even when marked private, and the bytecode is public, so a constant like <code>collapseThreshold</code> is visible to anyone who looks. Assume that within a day of launch someone publishes a dashboard showing exactly how close the world is to breaking.</p>
+  <p>Commit-reveal works but costs trust &mdash; you know the number, so players must believe you neither chose it adversarially nor pre-committed several and revealed the convenient one.</p>
+
+  <div class="box">
+    <span class="box-label">The model</span>
+    <p>There is no threshold. There is a <strong>rising hazard rate.</strong> Stress accumulates; each epoch, collapse probability is a public function of stress; the roll happens at settlement.</p>
+    <p>Everything is auditable &mdash; players can compute the exact odds &mdash; and nobody knows whether this is the epoch, because it has not happened yet.</p>
+  </div>
+
+  <p>This beats a hidden constant three ways. It removes the "the devs rigged it" attack surface entirely. It produces <em>near misses</em>, which is where the stories come from. And it is the more truthful model: ecosystems do not have crisp breaking points, they get fragile and then something tips them. A badly stressed world can limp on; a moderately stressed one can get unlucky.</p>
+
+  <h3>What feeds stress</h3>
+  <ul>
+    <li>Reservoir depletion &mdash; how far below the floor, and for how long</li>
+    <li>Soil depletion &mdash; nutrients drawn above the band</li>
+    <li><strong>Stagnation</strong> &mdash; nutrients drawn below the band, accumulating as a different kind of decay</li>
+    <li>Neglect &mdash; the proportion of plots untended</li>
+    <li>Area outrunning labour &mdash; world size against active stewards</li>
+    <li>Voting concentration &mdash; the HHI dial</li>
+    <li>Quorum failures &mdash; epochs where the community decided nothing</li>
+    <li>Undefended threats &mdash; anything that got through (see <a href="#threats">11</a>)</li>
+  </ul>
+  <p>All of them are visible in the world itself, mostly through which creatures are still around. Players watch things get worse and feel the dread without ever knowing the number.</p>
+
+  <div class="box open">
+    <span class="box-label">Two failure shapes</span>
+    <p>Over-extraction and stagnation should probably not fail the same way. Depletion collapse is sudden &mdash; a roll that comes up bad. Stagnation is better modelled as a <em>timeout</em>: the level expires undone, the world does not die but nothing was achieved, collectibles stay locked and nothing heals. Quieter, sadder, and a genuinely different thing to have to explain to your community afterwards.</p>
+  </div>
+
+  <h3>Collapse is graduated</h3>
+  <p>A collapse knocks the world down one tier and kills the <em>least-tended</em> plots first, so damage correlates with neglect rather than falling at random. This is what answers "why invest if strangers can destroy it" without any personal progression ladder &mdash; and a surviving plot in a collapsed world is still a sad square of dirt, so you still cannot save yourself alone.</p>
+
+  <h3>Scars</h3>
+  <p>Every collapse writes a permanent on-chain record: the epoch, the stress composition, the reservoir's low-water mark, the draw ledger of the final window, and which creatures were lost. The world becomes an archaeological record of its own failures &mdash; a much better answer to <em>how far can we take this</em> than a reset button.</p>
+</section>
+
+<section id="threats" class="col">
+  <span class="rule-label">11 &mdash; Threats and defence</span>
+  <h2>Something to win together</h2>
+  <p>Everything else in this design is dread: restraint, avoidance, watching conditions worsen. A threat is the one thing players fight and <em>beat</em>. Without that release the game is unrelieved tension and people burn out, so this section is doing emotional work as much as mechanical work.</p>
+
+  <div class="box warn">
+    <span class="box-label">The pillar conflict, resolved</span>
+    <p>"Experienced players with rare unlocked abilities defend the world" is a personal power ladder, which P1 and P2 rule out. If defence requires veteran abilities, then veterans hold power newcomers do not, there is a ladder worth grinding, and a skilled individual can meaningfully carry the world.</p>
+    <p>The two mechanisms below deliver everything that idea was reaching for &mdash; escalating stakes, veterans mattering, cooperative set-pieces &mdash; without the ladder.</p>
+  </div>
+
+  <h3>Abilities belong to the world, not the player</h3>
+  <p>Tier unlocks give <em>the world</em> capabilities: a watchtower that gives an epoch of warning, a thornwall that slows a boar, a beast-ward that turns a dragon aside. Any player can operate any of them.</p>
+  <p>Veterans matter because they know which one to use, when to build it, and what the last dragon did &mdash; not because they alone can act. That knowledge transfers by teaching, teaching is a social act, and social acts feed standing. This is P2 working exactly as designed, and it makes experienced players valuable in a way that is impossible to hoard.</p>
+
+  <h3>Roles are taken, not earned</h3>
+  <p>A threat requires <code>N</code> players to take a defensive stance during the epoch, at the cost of not tending their own plot. Anyone qualifies. The scarcity is <strong>willingness to give up a turn</strong>, not accumulated stats.</p>
+  <p>The drama is entirely intact &mdash; will enough people show up, and will they show up for a sector that is not theirs? &mdash; and it tests precisely what the game is about. It also creates the game's best moment: a threat announced with one epoch of warning, and a public count of who has committed, ticking upward or not.</p>
+  <p>Defence has a real cost, so it feeds the corridor too. An epoch spent defending is an epoch not spent growing, and a world that defends constantly will stagnate.</p>
+
+  <h3>Who leads</h3>
+  <p>Nobody, mechanically. High-standing players are the ones others choose to rally behind, and that is an emergent social fact rather than a granted role. If the community wants a formal commander, delegation already exists &mdash; let them invent it rather than shipping it.</p>
+</section>
+
+<section id="levels" class="col">
+  <span class="rule-label">12 &mdash; Levels and continuing play</span>
+  <h2>You never win. You continue.</h2>
+  <p>A level completes when the world reaches a state no single strategy can produce. All of these at once:</p>
+  <ol>
+    <li>Area above threshold &mdash; which requires genuine active players</li>
+    <li>Tended ratio above threshold for <code>N</code> <em>consecutive</em> epochs</li>
+    <li>Reservoir never breaching its floor during that window</li>
+    <li>Nutrient draw held inside the band for that window</li>
+    <li>The level's tier features unlocked, which means the rare creatures came</li>
+  </ol>
+  <p>Condition 2 is the important one: duration is the only requirement that cannot be bought, and it is what makes a collapse at epoch <code>N&minus;1</code> devastating. Express every threshold as a proportion of active plots rather than a headcount, so the same tuning works at forty players and at four thousand.</p>
+
+  <h3>Three horizons</h3>
+  <p>Players must win something in week one or they will not be there in week ten.</p>
+  <ul>
+    <li><strong>Epoch goals</strong> (days) &mdash; survive the drought, hold the band, repel the boars</li>
+    <li><strong>Tier goals</strong> (weeks) &mdash; unlock the orchard, bring the cranes back</li>
+    <li><strong>Level goal</strong> &mdash; the full conjunction above, unlocking and healing every collectible</li>
+  </ul>
+
+  <h3>The endgame is policed socially</h3>
+  <p>Near completion the community will want to stop a handful of players from breaking a nearly-finished level. That pressure is deliberately left to the players: no quarantine mechanic, no removal power. They argue, they shame, they negotiate, and sometimes they fail. This is where "the community splits" stops being a stated failure mode and becomes a lived one.</p>
+  <p>It is also where the corridor bites hardest, because the players everyone suspects may be the ones holding the tier open.</p>
+
+  <h3>Then it gets harder</h3>
+  <p>Completion starts the next level: larger world, tighter band, higher bar, worse monsters. There is no victory condition for the game itself &mdash; only levels that continue. The permanent scoreboard is not any player's holdings, it is the high-water mark. <em>We reached Era III in season two.</em> That is the number the game is actually about.</p>
+</section>
+
+<section id="entry" class="col">
+  <span class="rule-label">13 &mdash; Entry and Sybil</span>
+  <h2>The stake, and why most attacks are not attacks</h2>
+  <p>Joining escrows <strong>0.001 ETH</strong> and grants one plot in a sector.</p>
+  <p>The structural principle does most of the defensive work: <em>every right attaches to a tended plot, not to an account</em> &mdash; water, nutrients, voting weight, collectible eligibility, defensive commitment. An attacker who wants any of those must actually tend a thousand plots, at which point they are not attacking the game, they are playing it very enthusiastically.</p>
+
+  <h3>Refund conditions</h3>
+  <p>Refunded on level completion or on collapse &mdash; <em>if</em> your plot was tended or cleanly ceded. Forfeited to the Stewardship Pool if you went dormant. "Refunded either way" would make the stake a pure Sybil toll with no behavioural teeth, including for the player who wanders off and leaves their plot rotting.</p>
+
+  <h3>Sponsorship</h3>
+  <p>The stake fights the win condition: 0.001 ETH is trivial as money, but requiring a funded wallet at all cuts acquisition hard, and level completion needs acquisition.</p>
+  <p>So an existing player can stake a newcomer in. This is the concrete use of standing that P2 promises &mdash; vouching for a stranger with your own money is costly, verifiable, and confers no power. If the person you sponsored drains the reservoir, that is on your record too. Sponsorship needs a cap, or a wealthy player sponsors a hundred newcomers who are all really them.</p>
+</section>
+
+<section id="stewardship" class="col">
+  <span class="rule-label">14 &mdash; Stewardship</span>
+  <h2>Tending what is not yours</h2>
+  <p>Maintaining other people's plots is the central community act, and framing it as an obligation guarantees nobody does it. Make it profitable and risky instead.</p>
+  <p><code>adopt(plotId)</code> &mdash; an adopted plot pays you its yield while you tend it and charges you its decay if you slip. After three consecutive tended epochs it merges permanently into your holding.</p>
+  <p><code>cede(plotId, to)</code> &mdash; hand your plot to a specific player when you step away. Your stake refunds and your record shows a clean exit rather than an abandonment.</p>
+  <p>Sectors make this work far better than a global adoption market would. An abandoned plot in your sector damages your own yield through adjacency, so the people with the strongest incentive to adopt it are the six people who already know the player who left.</p>
+  <p>The Stewardship Pool, funded by forfeited stakes, pays adoption bounties and the epoch settlement bounty.</p>
+</section>
+
+<section id="technical" class="col">
+  <span class="rule-label">15 &mdash; Technical spine</span>
+  <h2>What the chain has to do</h2>
+
+  <h3>L2, not mainnet</h3>
+  <p>The game asks each player for a transaction a day plus votes, adoptions and defences. On mainnet that is dollars per tend and the stake gets swallowed by a single transaction; on an L2 it is a fraction of a cent. This is settled practice rather than a compromise &mdash; essentially every fully onchain game lives on an L2 or a purpose-built app-chain. Base is the pragmatic default for reach and onboarding; Redstone is the thematically pointed choice.</p>
+
+  <h3>Epochs and lazy decay</h3>
+  <p>Fixed 24-hour epochs. Never simulate per block. Store <code>lastTendedEpoch</code> per plot and compute decay lazily on read or interaction, so an idle plot costs nothing until someone touches it. One <code>settleEpoch()</code> anyone can call, paying a bounty from the Stewardship Pool so it always gets called.</p>
+
+  <div class="box">
+    <span class="box-label">The constraint to hold from day one</span>
+    <p>Every mechanic must be expressible as <em>state at epoch N derived from actions during epoch N&minus;1</em>. Anything that cannot be, gets cut. Creature attraction, adjacency bonuses and threat resolution all have to fit this &mdash; check each one before designing it in detail.</p>
+  </div>
+
+  <h3>Randomness</h3>
+  <p>Chainlink VRF, not <code>block.prevrandao</code>. Whoever calls <code>settleEpoch()</code> can observe prevrandao before deciding whether to call, which lets them dodge unfavourable rolls. VRF's request/fulfill split closes that. One roll per epoch covers the hazard check, creature arrivals and threat spawns together.</p>
+
+  <h3>Adjacency is a gas trap</h3>
+  <p>Naively, a plot's yield depends on its neighbours, whose yield depends on <em>their</em> neighbours, and settlement becomes a graph traversal over the whole world. Cap it: adjacency effects resolve at the sector level only, computed once per sector per epoch and cached. Sectors are fixed membership, so this is a bounded loop over six to eight plots, not a spreading calculation.</p>
+
+  <h3>Token surface</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Token</th><th>Standard</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr><td>Standing record</td><td class="mono">ERC-721 + 5192</td><td>One per player, permanently locked, mutable on-chain SVG, never revoked</td></tr>
+        <tr><td>Collectibles</td><td class="mono">ERC-721 + 5192</td><td>Locked during a level; all unlock on completion; era-scarred on collapse, healed on the next completion</td></tr>
+        <tr><td>Plots</td><td class="mono">Internal state</td><td>Not a token &mdash; tradeable plots would let someone buy into water, votes and eligibility at once</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><a href="https://eips.ethereum.org/EIPS/eip-5192">ERC-5192</a> standardises only a <code>locked()</code> flag and transfer reverts. It says nothing about unlocking, so the completion unlock is your own logic &mdash; emit <code>Unlocked</code> and flip the flag.</p>
+</section>
+
+<section id="ostrom" class="col">
+  <span class="rule-label">16 &mdash; Ostrom mapping</span>
+  <h2>Where the mechanics come from</h2>
+  <p>Elinor Ostrom won a Nobel for documenting how real communities govern shared resources without collapsing. Her eight design principles are close to a spec for this game, and naming them shows the mechanics came from somewhere.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Principle</th><th>In the world</th></tr></thead>
+      <tbody>
+        <tr><td>Clear boundaries</td><td>Plot stake and wilderness reversion &mdash; membership is observable</td></tr>
+        <tr><td>Rules fit conditions</td><td>Proportional thresholds; a band that moves with era and season</td></tr>
+        <tr><td>Collective choice</td><td>The per-epoch Expansion vs. Resilience vote</td></tr>
+        <tr><td>Monitoring</td><td>The public draw ledger, led by forbearance; creatures as ambient signal</td></tr>
+        <tr><td>Graduated sanctions</td><td>Tier knock-down, neglect-weighted plot death, era-scarred collectibles</td></tr>
+        <tr><td>Conflict resolution</td><td>Quorum rules, cede/adopt handoff, sector-level negotiation</td></tr>
+        <tr><td>Right to organise</td><td>Sectors, sacrifice pledges, delegation, defensive mobilisation</td></tr>
+        <tr><td>Nested enterprises</td><td>Plot in sector in world; epoch in tier in level in era</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Sectors are what upgraded this table from aspiration to structure. Ostrom's principles largely describe groups small enough to know each other; a thousand-player commons cannot satisfy them directly, but a thousand-player world made of sectors of seven can.</p>
+</section>
+
+<section id="naming" class="col">
+  <span class="rule-label">17 &mdash; Naming and IP</span>
+  <h2>Don't call it the Infinite Garden</h2>
+  <p><strong>Copyright is the wrong frame.</strong> Short phrases, titles and names are not copyrightable; this is a trademark question, and a light one.</p>
+  <p>The Ethereum Foundation's <a href="https://ethereum.foundation/infinitegarden">page on the metaphor</a> carries no trademark notice, no licensing statement and no usage guidance &mdash; it reads as a philosophical position rather than a branded property. And the idea is not theirs to begin with: it comes from James P. Carse's <em>Finite and Infinite Games</em>, which the EF applies to Ethereum. The underlying concept is prior art nobody owns.</p>
+  <p><strong>The real risk is not the Foundation.</strong> There is already at least one memecoin trading on the name. Being mistaken for it is worse for a serious project than any legal exposure, and no amount of explaining fixes a first impression.</p>
+  <p>So: take your own name, and credit the metaphor and Carse openly in the README and the pitch. You keep every bit of the resonance, lose the confusion, and get something searchable.</p>
+
+  <div class="box">
+    <span class="box-label">Worth stealing from Carse</span>
+    <p>A finite game is played to win and then it ends. An infinite game is played to continue play. This design already sits on the right side of that line &mdash; there is no victory, only levels that continue &mdash; so say it in the game's own language. <em>You never win. You continue.</em></p>
+    <p>It also explains why the permanent scoreboard is the high-water mark rather than anyone's holdings, and it gives the collapse mechanic its meaning: a finite game would be over, an infinite one starts again.</p>
+  </div>
+
+  <p class="mono">Not legal advice. If this becomes a product with a token attached, get a real opinion.</p>
+</section>
+
+<section id="open" class="col">
+  <span class="rule-label">18 &mdash; Open questions</span>
+  <h2>Unresolved</h2>
+  <ul>
+    <li><strong>How wide is the band, and how fast does it move?</strong> Too wide and there is no tension; too narrow and every level times out. This is the single most important tuning problem in the game.</li>
+    <li><strong>Does stagnation fail as a timeout or as its own collapse?</strong> Leaning timeout &mdash; see section 10.</li>
+    <li><strong>The hazard curve's shape.</strong> Too shallow and collapse feels arbitrary; too steep and it is a threshold with extra steps.</li>
+    <li><strong>Creature attraction formula</strong> &mdash; how local, sector and world conditions combine, and whether mythicals should be deterministic given conditions or a roll on top.</li>
+    <li><strong>Sector size.</strong> Six to eight is a guess from the coordination literature; it wants testing.</li>
+    <li><strong>How many defenders a threat needs</strong> as a proportion of actives, and whether failure to muster is a partial loss or total.</li>
+    <li><strong>Voting bloc detection</strong> &mdash; the cartel hole in section 09.</li>
+    <li><strong>Sponsorship cap.</strong></li>
+    <li><strong>Whether sectors can be chosen or only assigned.</strong> Chosen sectors let friends cluster, which helps coordination and hurts the mixing that makes strangers cooperate.</li>
+  </ul>
+</section>
+
+<section id="build" class="col">
+  <span class="rule-label">19 &mdash; Build order</span>
+  <h2>What to build first</h2>
+  <ol>
+    <li><strong>Epoch settlement and lazy decay.</strong> Everything is downstream of it, and it is the piece most likely to force a redesign if left late.</li>
+    <li><strong>Plots, tending, water, nutrients, and the draw ledger.</strong> The corridor is the game &mdash; get both resources in from the start, because a water-only prototype tests a different and easier game than the one you are building.</li>
+    <li><strong>Sectors and adjacency.</strong> Cheap to add now, structural to retrofit later.</li>
+    <li><strong>Stake, join, cede, adopt.</strong> Economy and stewardship loop.</li>
+    <li><strong>The stress model and the hazard roll.</strong> Tunable from day one; the numbers will be wrong for a while.</li>
+    <li><strong>Creatures.</strong> Common and uncommon only. They are the feedback layer and the reason to look at the screen &mdash; do not leave them to the end.</li>
+    <li><strong>The standing record SVG.</strong> The second demo and the thing people screenshot.</li>
+    <li><strong>Collectibles, era scarring, healing, the unlock.</strong></li>
+    <li><strong>Voting.</strong> Most fun to design, least load-bearing before you have players.</li>
+    <li><strong>Threats.</strong> Era II. Do not build the dragon.</li>
+  </ol>
+
+  <div class="box">
+    <span class="box-label">The demo</span>
+    <p>A live public ledger of who drew what, with the reservoir falling, the nutrient band drawn on screen, and the herons leaving. That communicates the entire game in ten seconds without anyone reading a rule.</p>
+  </div>
+</section>
+
+<footer class="col">
+  <p>References &mdash; <a href="https://eips.ethereum.org/EIPS/eip-5192">ERC-5192: Minimal Soulbound NFTs</a> &middot; <a href="https://ethereum.foundation/infinitegarden">Nurturing the Infinite Garden</a>, Ethereum Foundation &middot; Elinor Ostrom, <em>Governing the Commons</em> (1990) &middot; James P. Carse, <em>Finite and Infinite Games</em> (1986)</p>
+</footer>
+
+</main>
+</body>
+</html>

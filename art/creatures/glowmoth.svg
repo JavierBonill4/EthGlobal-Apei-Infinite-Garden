@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="glowmoth">
+  <!-- PLACEHOLDER uncommon: glowmoth. Anchored bottom-centre over a plot. -->
+  <circle cx="32" cy="28" r="13" fill="currentColor" opacity="0.75"/>
+  <rect x="28" y="38" width="8" height="16" fill="currentColor" opacity="0.45"/>
+  <text x="32" y="62" text-anchor="middle" font-family="monospace" font-size="6"
+        fill="currentColor" opacity="0.8">glowmoth</text>
+</svg>

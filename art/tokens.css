@@ -1,0 +1,76 @@
+/* Palette tokens. PLACEHOLDER -- change these and everything follows.
+ *
+ * A cool lichen/verdigris set, chosen mostly to avoid the warm cream and
+ * terracotta that every garden project defaults to. Nothing here is precious.
+ *
+ * Rules that should survive a redesign:
+ *   - semantic colours (--ig-sev-*) stay separate from the accent; the accent
+ *     must never be the thing that means "danger"
+ *   - every colour is defined in the base :root block, and only REDEFINED in
+ *     the theme blocks. A colour that only exists inside a media query will be
+ *     missing for viewers on the default "system" setting.
+ */
+
+:root {
+  --ig-ground: #e8ece7;
+  --ig-surface: #fafbf9;
+  --ig-surface-2: #eff2ed;
+  --ig-ink: #14201b;
+  --ig-muted: #5a675f;
+  --ig-rule: #c6cec6;
+  --ig-accent: #12756a;
+
+  /* health bands -- keep in step with manifest.json */
+  --ig-band-thriving: #cfe3d4;
+  --ig-band-steady: #e8ece7;
+  --ig-band-stressed: #ede4d2;
+  --ig-band-dying: #e5d2d2;
+  --ig-band-wilderness: #dfe2da;
+
+  /* semantic, NOT the accent */
+  --ig-sev-critical: #8c2f3d;
+  --ig-sev-warning: #8e6710;
+  --ig-sev-good: #2e6b4f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ig-ground: #0f1512;
+    --ig-surface: #171f1b;
+    --ig-surface-2: #1c2521;
+    --ig-ink: #e3eae4;
+    --ig-muted: #8d9c93;
+    --ig-rule: #2c3a33;
+    --ig-accent: #56c4ae;
+
+    --ig-band-thriving: #24503a;
+    --ig-band-steady: #1c2521;
+    --ig-band-stressed: #3a3222;
+    --ig-band-dying: #3a2427;
+    --ig-band-wilderness: #202722;
+
+    --ig-sev-critical: #e28c98;
+    --ig-sev-warning: #d8b156;
+    --ig-sev-good: #6cc196;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ig-ground: #0f1512;
+  --ig-surface: #171f1b;
+  --ig-surface-2: #1c2521;
+  --ig-ink: #e3eae4;
+  --ig-muted: #8d9c93;
+  --ig-rule: #2c3a33;
+  --ig-accent: #56c4ae;
+
+  --ig-band-thriving: #24503a;
+  --ig-band-steady: #1c2521;
+  --ig-band-stressed: #3a3222;
+  --ig-band-dying: #3a2427;
+  --ig-band-wilderness: #202722;
+
+  --ig-sev-critical: #e28c98;
+  --ig-sev-warning: #d8b156;
+  --ig-sev-good: #6cc196;
+}

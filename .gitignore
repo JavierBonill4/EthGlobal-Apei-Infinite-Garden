@@ -1,0 +1,31 @@
+# solidity / foundry
+contracts/out/
+contracts/cache/
+contracts/lib/
+contracts/broadcast/
+*.bin
+*.abi
+
+# node
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# the graph
+subgraph/generated/
+subgraph/build/
+
+# env & secrets -- never commit a key
+.env
+.env.local
+.env.*.local
+*.pem
+
+# editors / os
+.DS_Store
+.vscode/
+.idea/
+*.swp

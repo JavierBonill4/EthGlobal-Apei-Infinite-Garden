@@ -1,0 +1,30 @@
+{
+  "name": "garden-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "linkart": "node -e \"const f=require('fs');f.mkdirSync('public',{recursive:true});try{f.symlinkSync('../../art','public/art','junction')}catch(e){if(e.code!=='EEXIST')throw e}\"",
+    "predev": "npm run linkart",
+    "prebuild": "npm run linkart",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "viem": "^2.21.0",
+    "wagmi": "^2.14.0",
+    "@tanstack/react-query": "^5.62.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  },
+  "comment": "Privy (@privy-io/react-auth) and World ID (@worldcoin/idkit) are not installed yet -- see docs/INTEGRATIONS.md for where each one plugs in."
+}

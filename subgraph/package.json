@@ -1,0 +1,17 @@
+{
+  "name": "garden-subgraph",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public draw ledger for The Garden",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ $SUBGRAPH_SLUG",
+    "create-local": "graph create --node http://localhost:8020/ garden-local",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 garden-local"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.97.1",
+    "@graphprotocol/graph-ts": "0.38.1"
+  }
+}

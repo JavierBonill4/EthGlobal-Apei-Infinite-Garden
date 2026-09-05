@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="World backdrop">
+  <!-- PLACEHOLDER. Very low contrast: it sits behind every plot. -->
+  <rect width="1600" height="900" fill="var(--ig-ground, #E8ECE7)"/>
+  <text x="800" y="450" text-anchor="middle" font-family="monospace" font-size="18"
+        fill="var(--ig-muted, #5A675F)" opacity="0.35">WORLD BACKDROP - PLACEHOLDER</text>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="scarred">
+  <!-- PLACEHOLDER overlay: marks the ERA, not the player -->
+  <rect x="4" y="4" width="152" height="152" fill="none" stroke="var(--ig-sev-critical, #8C2F3D)" stroke-width="2" opacity="0.6"/>
+  <text x="80" y="150" text-anchor="middle" font-family="monospace" font-size="9" fill="var(--ig-sev-critical, #8C2F3D)">SCARRED</text>
+</svg>

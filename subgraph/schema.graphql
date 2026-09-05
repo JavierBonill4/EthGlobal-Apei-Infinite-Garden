@@ -1,0 +1,96 @@
+"""
+The draw ledger is the product, not an implementation detail.
+
+Everything here exists to answer one question fast: who took what, and who
+DIDN'T. Note that Forbearance is a first-class entity -- water left is the
+headline number in the UI, because if restraint is invisible then holding back
+just makes you a sucker.
+"""
+
+type Season @entity(immutable: false) {
+  id: ID! # level number
+  level: Int!
+  genesis: BigInt!
+  outcome: String! # Running | Completed | CollapsedDepletion | CollapsedStagnation
+  endedAtEpoch: Int
+  plotsAtStart: Int!
+  epochs: [EpochRecord!]! @derivedFrom(field: "season")
+}
+
+type EpochRecord @entity(immutable: false) {
+  id: ID! # season-epoch
+  season: Season!
+  epoch: Int!
+  "The roll. Unknown to players until this record exists."
+  requirement: Int
+  wellLevel: Int
+  plotsMet: Int
+  plotsMissed: Int
+  totalDrawn: BigInt!
+  "Sum of water players were entitled to and did not take."
+  totalForborne: BigInt!
+  settledAt: BigInt
+  draws: [Draw!]! @derivedFrom(field: "epochRecord")
+}
+
+type Player @entity(immutable: false) {
+  id: ID! # address
+  plot: Plot
+  "ENS name under the world's parent, when resolved."
+  ensName: String
+  totalDrawn: BigInt!
+  totalForborne: BigInt!
+  seedsGiven: BigInt!
+  epochsPresent: Int!
+  collapsesPresentFor: Int!
+  draws: [Draw!]! @derivedFrom(field: "player")
+}
+
+type Plot @entity(immutable: false) {
+  id: ID! # plotId
+  owner: Player
+  steward: Player
+  status: String! # Queued | Active | Wilderness
+  joinedEpoch: Int!
+  lastTendedEpoch: Int!
+  offlineMode: String!
+  waterHealthAtLastAction: Int!
+  nutrientHealthAtLastAction: Int!
+}
+
+"""
+One draw. The unit of the public ledger.
+"""
+type Draw @entity(immutable: true) {
+  id: ID! # tx-logIndex
+  epochRecord: EpochRecord!
+  plot: Plot!
+  player: Player!
+  epoch: Int!
+  amount: BigInt!
+  "What they left in the well. The number the UI leads with."
+  forborne: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type SeedContribution @entity(immutable: true) {
+  id: ID!
+  plot: Plot!
+  epoch: Int!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+"""
+Collapses are permanent history. The world becomes an archaeological record of
+its own failures -- this is where that record lives.
+"""
+type Collapse @entity(immutable: true) {
+  id: ID!
+  season: Season!
+  atEpoch: Int!
+  outcome: String!
+  wellLowWaterMark: Int!
+  timestamp: BigInt!
+}

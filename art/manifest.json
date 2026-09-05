@@ -1,0 +1,50 @@
+{
+  "$comment": "The single registry of every visual asset. Drop a file in, add a line here, done. See ART.md.",
+  "version": "0.1.0-placeholder",
+  "healthBands": {
+    "$comment": "MIRRORED in contracts/src/art/PlaceholderArt.sol. Change both or the token art and the app will disagree.",
+    "thriving": 700,
+    "steady": 400,
+    "stressed": 150,
+    "dying": 0
+  },
+  "backgrounds": {
+    "thriving": "backgrounds/plot-thriving.svg",
+    "steady": "backgrounds/plot-steady.svg",
+    "stressed": "backgrounds/plot-stressed.svg",
+    "dying": "backgrounds/plot-dying.svg",
+    "wilderness": "backgrounds/plot-wilderness.svg",
+    "worldBackdrop": "backgrounds/world-backdrop.svg"
+  },
+  "creatures": {
+    "common": {
+      "bee": "creatures/bee.svg",
+      "butterfly": "creatures/butterfly.svg",
+      "rabbit": "creatures/rabbit.svg"
+    },
+    "uncommon": {
+      "heron": "creatures/heron.svg",
+      "fox": "creatures/fox.svg",
+      "glowmoth": "creatures/glowmoth.svg"
+    },
+    "rare": {
+      "crane": "creatures/crane.svg",
+      "whiteStag": "creatures/white-stag.svg"
+    },
+    "mythical": {
+      "turtleDuck": "creatures/turtle-duck.svg",
+      "mossLion": "creatures/moss-lion.svg",
+      "lanternFox": "creatures/lantern-fox.svg"
+    }
+  },
+  "ui": {
+    "wellGauge": "ui/well-gauge.svg",
+    "bandMeter": "ui/band-meter.svg",
+    "epochClock": "ui/epoch-clock.svg"
+  },
+  "overlays": {
+    "$comment": "Composited over a plot, not replacements for it.",
+    "scarred": "ui/overlay-scarred.svg",
+    "healed": "ui/overlay-healed.svg"
+  }
+}

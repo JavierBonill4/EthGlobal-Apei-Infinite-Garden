@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" role="img" aria-label="Shared well level">
+  <!-- PLACEHOLDER. Must fall visibly and legibly at a glance. -->
+  <rect x="0.5" y="0.5" width="239" height="79" fill="var(--ig-surface, #FAFBF9)" stroke="var(--ig-rule, #C6CEC6)"/>
+  <rect x="12" y="40" width="150" height="24" fill="var(--ig-accent, #12756A)" opacity="0.35"/>
+  <rect x="12" y="40" width="216" height="24" fill="none" stroke="var(--ig-rule, #C6CEC6)"/>
+  <text x="12" y="28" font-family="monospace" font-size="10" fill="var(--ig-muted, #5A675F)">WELL - PLACEHOLDER</text>
+</svg>

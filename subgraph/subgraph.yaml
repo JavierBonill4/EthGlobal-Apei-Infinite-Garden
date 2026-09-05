@@ -1,0 +1,49 @@
+specVersion: 1.0.0
+description: >
+  The Garden's public draw ledger. Indexes who drew what, and who forbore,
+  every epoch -- plus the permanent record of every collapse.
+repository: https://github.com/YOUR_ORG/infinite-garden
+schema:
+  file: ./schema.graphql
+
+dataSources:
+  - kind: ethereum
+    name: Garden
+    network: base-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000" # TODO: from deploy
+      abi: Garden
+      startBlock: 0 # TODO: deployment block, or indexing is needlessly slow
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - Season
+        - EpochRecord
+        - Player
+        - Plot
+        - Draw
+        - SeedContribution
+        - Collapse
+      abis:
+        - name: Garden
+          file: ../contracts/out/Garden.sol/Garden.json
+      eventHandlers:
+        - event: SeasonStarted(indexed uint32,uint256,uint32)
+          handler: handleSeasonStarted
+        - event: PlotClaimed(indexed uint256,indexed address)
+          handler: handlePlotClaimed
+        - event: PlotCeded(indexed uint256,indexed address,indexed address)
+          handler: handlePlotCeded
+        - event: PlotReverted(indexed uint256)
+          handler: handlePlotReverted
+        - event: WaterDrawn(indexed uint256,indexed address,indexed uint32,uint32,uint32)
+          handler: handleWaterDrawn
+        - event: SeedsContributed(indexed uint256,indexed uint32,uint32)
+          handler: handleSeedsContributed
+        - event: EpochSettled(indexed uint32,uint16,uint32,uint32,uint32)
+          handler: handleEpochSettled
+        - event: SeasonEnded(indexed uint32,uint8,uint32)
+          handler: handleSeasonEnded

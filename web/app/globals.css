@@ -1,0 +1,89 @@
+/* Palette lives in art/tokens.css so the designer owns it. */
+@import "../../art/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ig-ground);
+  color: var(--ig-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ig-mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.ig-wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 6rem;
+}
+
+.ig-panel {
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  padding: 1.25rem;
+}
+
+.ig-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ig-muted);
+}
+
+/* The garden map. Plots tile edge to edge, so the art must too. */
+.ig-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0;
+}
+
+.ig-plot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+table.ig-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+table.ig-ledger th {
+  text-align: left;
+  font-family: ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ig-muted);
+  font-weight: 500;
+  padding: 0 0.9rem 0.5rem 0;
+  border-bottom: 1px solid var(--ig-rule);
+}
+
+table.ig-ledger td {
+  padding: 0.55rem 0.9rem 0.55rem 0;
+  border-bottom: 1px solid var(--ig-rule);
+}
+
+/* Forbearance is the number the eye should land on. */
+td.ig-forborne {
+  color: var(--ig-accent);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
