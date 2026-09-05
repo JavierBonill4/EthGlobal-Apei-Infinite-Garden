@@ -8,8 +8,18 @@
 
 const SUBGRAPH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_URL ?? "";
 
+/** No subgraph configured is a normal state during local dev, not an error. */
+export const isIndexerConfigured = SUBGRAPH_URL.length > 0;
+
+export class IndexerNotConfigured extends Error {
+  constructor() {
+    super("No subgraph configured");
+    this.name = "IndexerNotConfigured";
+  }
+}
+
 export async function gql<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
-  if (!SUBGRAPH_URL) throw new Error("NEXT_PUBLIC_SUBGRAPH_URL is not set");
+  if (!SUBGRAPH_URL) throw new IndexerNotConfigured();
   const res = await fetch(SUBGRAPH_URL, {
     method: "POST",
     headers: { "content-type": "application/json" },

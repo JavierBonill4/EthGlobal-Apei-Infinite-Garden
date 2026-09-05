@@ -60,28 +60,82 @@ art/           ALL VISUAL ASSETS + the designer handoff spec. Start at ART.md.
 docs/          Design, architecture, mechanics, integrations, open questions.
 ```
 
-## Quickstart
+## Environment files
+
+There are **two**, in two places, because Foundry and Next.js each look in
+their own directory. A single `.env` at the repo root is read by neither.
+
+| File | Read by | Copy from |
+|---|---|---|
+| `contracts/.env` | `forge` | `contracts/.env.example` |
+| `web/.env.local` | `next` | `web/.env.local.example` |
+
+The root `.env.example` is an annotated master list — useful for seeing every
+variable in one place, but it is reference, not config.
+
+**Everything to do with Chainlink, The Graph, World, ENS and Privy can stay
+empty while you build locally.** The examples ship with working localhost
+values; the only ones that matter on day one are `PRIVATE_KEY`,
+`USE_MOCK_RANDOMNESS=true`, and `NEXT_PUBLIC_CHAIN_ID=31337`.
+
+## Local first run
 
 ```bash
 git clone <your-repo> && cd infinite-garden
-cp .env.example .env          # then fill it in
 
-# contracts
+# 1. contracts
 cd contracts
+cp .env.example .env
 forge install foundry-rs/forge-std
-forge build
-forge test -vvv
+forge build && forge test -vvv
 
-# local season with a steerable dice roll
-anvil &
-USE_MOCK_RANDOMNESS=true forge script script/Deploy.s.sol \
-  --rpc-url http://localhost:8545 --broadcast
+# 2. a local chain
+anvil                                    # leave running in another terminal
 
-# web
-cd ../web && npm install && npm run dev
+# 3. deploy a season
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+# copy Garden + MockRandomness addresses from the output into contracts/.env
+# (GARDEN_ADDRESS, RNG_ADDRESS) and into web/.env.local
+
+# 4. the season starts after the kickoff timer, so jump the clock
+cast rpc evm_increaseTime 172800 --rpc-url http://127.0.0.1:8545
+cast rpc evm_mine --rpc-url http://127.0.0.1:8545
+cast send $GARDEN_ADDRESS "startSeason()" --rpc-url http://127.0.0.1:8545 --private-key $PRIVATE_KEY
+
+# 5. web
+cd ../web && cp .env.local.example .env.local && npm install && npm run dev
 ```
 
-`forge install` is the only step that needs network access beyond npm.
+### The one thing that will confuse you
+
+Settlement is **two-phase on purpose**: `settleBegin()` requests a random word,
+and a callback finalises the epoch. On a real network Chainlink delivers that
+callback. Locally, `MockRandomness` delivers nothing until somebody calls
+`fulfil()`.
+
+So if you call `settleBegin()` and nothing happens — and then every later
+settlement reverts with `SettlementInFlight` — the contract is not broken.
+**Nobody rolled the dice.** Use the helper, which does both halves:
+
+```bash
+cd contracts
+cast rpc evm_increaseTime 86400 --rpc-url http://127.0.0.1:8545
+cast rpc evm_mine --rpc-url http://127.0.0.1:8545
+forge script script/LocalSettle.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+It prints the requirement that was rolled and the well level, which is the
+fastest way to feel whether your parameters are tuned sanely.
+
+### Two more local gotchas
+
+- **Epochs are 24 hours.** Nothing settles until the clock moves. Every local
+  session is mostly `evm_increaseTime`.
+- **`MockRandomness` lets anyone choose the roll.** That is the point locally
+  and a catastrophe anywhere else — it hands the world's fate to whoever calls
+  settlement. `USE_MOCK_RANDOMNESS` must never be true on a public network.
+
+`forge install` is the only step needing network access beyond npm.
 
 ## Where to start reading
 

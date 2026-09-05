@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { gql, DRAW_LEDGER } from "../lib/queries";
+import { gql, DRAW_LEDGER, isIndexerConfigured, IndexerNotConfigured } from "../lib/queries";
 
 type Draw = {
   id: string;
@@ -46,6 +46,7 @@ export function DrawLedger({ epoch }: { epoch: number }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isIndexerConfigured) return;
     let cancelled = false;
     gql<{ draws: Draw[]; epochRecord: EpochRecord | null }>(DRAW_LEDGER, { epoch })
       .then((d) => {
@@ -53,11 +54,28 @@ export function DrawLedger({ epoch }: { epoch: number }) {
         setDraws(d.draws);
         setRecord(d.epochRecord);
       })
-      .catch((e) => !cancelled && setError(e.message));
+      .catch((e) => {
+        if (cancelled || e instanceof IndexerNotConfigured) return;
+        setError(e.message);
+      });
     return () => {
       cancelled = true;
     };
   }, [epoch]);
+
+  // Running without a subgraph is the normal local-dev state, not a failure.
+  // Everything else on the page works; this panel just has nothing to show.
+  if (!isIndexerConfigured) {
+    return (
+      <section className="ig-panel">
+        <p className="ig-label">Epoch {epoch} · draw ledger</p>
+        <p style={{ color: "var(--ig-muted)" }}>
+          Not indexed yet. Set <code>NEXT_PUBLIC_SUBGRAPH_URL</code> in{" "}
+          <code>web/.env.local</code> to see who drew what.
+        </p>
+      </section>
+    );
+  }
 
   if (error) {
     return (
