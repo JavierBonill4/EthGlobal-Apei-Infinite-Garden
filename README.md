@@ -92,18 +92,48 @@ forge build && forge test -vvv
 # 2. a local chain
 anvil                                    # leave running in another terminal
 
-# 3. deploy a season
+# 3-6 in one command, in the order that works:
+./script/local-seed.sh
+# ...or do it by hand, below, to see what it does.
+
+# 3. deploy a season  (local-seed.sh does 3-6)
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-# copy Garden + MockRandomness addresses from the output into contracts/.env
-# (GARDEN_ADDRESS, RNG_ADDRESS) and into web/.env.local
+# The script prints five addresses. They go to two different places:
+#   contracts/.env   GARDEN_ADDRESS = Garden, RNG_ADDRESS = MockRandomness
+#                    (used by script/LocalSettle.s.sol)
+#   web/.env.local   NEXT_PUBLIC_GARDEN_ADDRESS       = Garden
+#                    NEXT_PUBLIC_STANDING_ADDRESS     = StandingRecord
+#                    NEXT_PUBLIC_COLLECTIBLES_ADDRESS = Collectibles
+# The web app never talks to the randomness source, so RNG_ADDRESS has no
+# NEXT_PUBLIC twin. PlaceholderArt is read through the other two, so it has
+# none either. Create web/.env.local first if you haven't:
+#   cp web/.env.local.example web/.env.local
 
-# 4. the season starts after the kickoff timer, so jump the clock
-cast rpc evm_increaseTime 172800 --rpc-url http://127.0.0.1:8545
-cast rpc evm_mine --rpc-url http://127.0.0.1:8545
-cast send $GARDEN_ADDRESS "startSeason()" --rpc-url http://127.0.0.1:8545 --private-key $PRIVATE_KEY
+# 4. put the env into your shell. `forge script` reads contracts/.env by
+#    itself; `cast` does NOT -- it only sees what your shell exported. Skip
+#    this and $GARDEN_ADDRESS is empty, so cast reads "startSeason()" as the
+#    to-address and fails with `odd number of digits`.
+set -a; source .env; set +a
+RPC=http://127.0.0.1:8545
 
-# 5. web
-cd ../web && cp .env.local.example .env.local && npm install && npm run dev
+# 5. join the queue BEFORE starting. startSeason() locks the cohort: plots
+#    that aren't queued at that moment can never enter this season, and
+#    claimWilderness() only recycles plots that already existed. Starting an
+#    empty season gives you a world with nobody in it and no way in.
+ANVIL_1=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+ANVIL_2=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+for k in $PRIVATE_KEY $ANVIL_1 $ANVIL_2; do
+  cast send $GARDEN_ADDRESS "joinQueue()" --value 0.001ether \
+    --rpc-url $RPC --private-key $k
+done
+
+# 6. the season starts after the kickoff timer, so jump the clock
+cast rpc evm_increaseTime 172800 --rpc-url $RPC
+cast rpc evm_mine --rpc-url $RPC
+cast send $GARDEN_ADDRESS "startSeason()" --rpc-url $RPC --private-key $PRIVATE_KEY
+
+# 7. web
+cd ../web && npm install && npm run dev   # .env.local was filled in at step 3
 ```
 
 ### The one thing that will confuse you

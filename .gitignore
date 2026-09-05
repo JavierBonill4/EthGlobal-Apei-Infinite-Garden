@@ -29,3 +29,7 @@ subgraph/build/
 .vscode/
 .idea/
 *.swp
+
+# next.js generated / the art symlink created by web/package.json "linkart"
+web/next-env.d.ts
+web/public/art
