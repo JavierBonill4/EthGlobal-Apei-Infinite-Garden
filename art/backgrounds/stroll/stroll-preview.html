@@ -94,7 +94,7 @@
 
 <div id="viewport">
   <div id="world"></div>
-  <div id="character"><img id="sprite" src="../world/avatar-s.svg" alt="character"></div>
+  <div id="character"><img id="sprite" src="../../world/avatar-s.svg" alt="character"></div>
   <div id="foreground"></div>
   <div id="hud">
     Walk with <b>← →</b> or <b>A / D</b><br>
@@ -157,7 +157,7 @@
   function setFacing(f) {
     if (f === facing) return;
     facing = f;
-    sprite.src = "../world/avatar-" + f + ".svg";
+    sprite.src = "../../world/avatar-" + f + ".svg";
   }
 
   function tick() {
