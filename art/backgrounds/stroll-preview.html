@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stroll — walk preview</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #0f1512; font-family: system-ui, sans-serif;
+  }
+
+  /* The viewport is the "screen" -- one window onto a much wider world. */
+  #viewport {
+    position: relative;
+    width: 100%; height: 100%;
+    overflow: hidden;
+  }
+
+  /* The world is the background tiled TILE_COUNT times, laid out in a row.
+     It gets pushed left/right (translateX) to follow the character -- the
+     character itself never moves on screen, the world moves under it. */
+  #world {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    display: flex;           /* lines the copies up edge to edge, no gaps */
+    will-change: transform;
+  }
+  #world img {
+    height: 100%;
+    width: auto;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    flex: none;               /* don't let flex squash the copies */
+  }
+
+  /* The foreground sits in the same DOM position/size as #world and moves
+     with the same transform, but renders above the character -- trees the
+     player can walk "behind". Clicks/keys must pass through it. */
+  #foreground {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    display: flex;
+    will-change: transform;
+    pointer-events: none;
+    z-index: 3;
+  }
+  #foreground img {
+    height: 100%;
+    width: auto;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    flex: none;
+  }
+
+  /* The character stays fixed at the horizontal centre of the viewport. */
+  #character {
+    position: absolute;
+    left: 50%;
+    bottom: 20%;
+    width: 68px;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 6px 4px rgba(0,0,0,.35));
+    z-index: 2;
+  }
+  #character img {
+    width: 100%;
+    display: block;
+  }
+  /* A little bob while walking -- same trick the real game uses instead of
+     a walk-cycle animation. */
+  #character.walking img {
+    animation: bob 0.28s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  #hud {
+    position: absolute; top: 14px; left: 14px;
+    color: #eaf1ec; font-size: 13px; line-height: 1.5;
+    background: rgba(15, 21, 18, .55);
+    padding: 8px 12px; border-radius: 8px;
+    pointer-events: none;
+  }
+  #hud b { color: #7fe3c9; }
+</style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="world"></div>
+  <div id="character"><img id="sprite" src="../world/avatar-s.svg" alt="character"></div>
+  <div id="foreground"></div>
+  <div id="hud">
+    Walk with <b>← →</b> or <b>A / D</b><br>
+    Tile <span id="tileIndex">1</span> of <span id="tileCount"></span>
+  </div>
+</div>
+
+<script>
+  // ---- config -----------------------------------------------------------
+  const TILE_SRC       = "Stroll.png";
+  const FOREGROUND_SRC = "Trees.png";  // same 1920x1080 canvas, trunks only, transparent elsewhere
+  const TILE_COUNT     = 10;           // "repeating this background 10 times"
+  const WALK_SPEED     = 4.2;          // world pixels per animation frame, at tile's natural height
+
+  // ---- build the world: TILE_COUNT copies of the background, edge to edge
+  const world = document.getElementById("world");
+  const foreground = document.getElementById("foreground");
+  const tileImgs = [];
+  for (let i = 0; i < TILE_COUNT; i++) {
+    const img = document.createElement("img");
+    img.src = TILE_SRC;
+    img.draggable = false;
+    world.appendChild(img);
+    tileImgs.push(img);
+
+    // Trees.png lines up with Stroll.png 1:1 -- same count, same order, so
+    // it stays registered with the background copy it sits in front of.
+    const fg = document.createElement("img");
+    fg.src = FOREGROUND_SRC;
+    fg.draggable = false;
+    foreground.appendChild(fg);
+  }
+  document.getElementById("tileCount").textContent = TILE_COUNT;
+
+  // ---- camera state -------------------------------------------------------
+  // worldX is how far the world has been pushed left, in the tile's OWN
+  // pixel space (1920 wide per copy) -- we scale to screen size in render().
+  let worldX = 0;
+  let tileNaturalWidth = 1920; // corrected once the image reports its real size
+  let facing = "s";            // s = idle/front, e = right, w = left
+
+  tileImgs[0].addEventListener("load", () => {
+    tileNaturalWidth = tileImgs[0].naturalWidth || 1920;
+  });
+
+  const keys = { left: false, right: false };
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft"  || e.key.toLowerCase() === "a") keys.left = true;
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") keys.right = true;
+  });
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowLeft"  || e.key.toLowerCase() === "a") keys.left = false;
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") keys.right = false;
+  });
+
+  const sprite = document.getElementById("sprite");
+  const characterEl = document.getElementById("character");
+  const tileIndexEl = document.getElementById("tileIndex");
+
+  function setFacing(f) {
+    if (f === facing) return;
+    facing = f;
+    sprite.src = "../world/avatar-" + f + ".svg";
+  }
+
+  function tick() {
+    const viewportHeight = document.getElementById("viewport").clientHeight;
+    const scale = viewportHeight / 1080; // Stroll.png's native height
+    const scaledTileWidth = tileNaturalWidth * scale;
+    const worldWidth = scaledTileWidth * TILE_COUNT;
+    const maxX = worldWidth - window.innerWidth; // clamp so you can't walk off the end
+
+    let moving = false;
+    if (keys.left && !keys.right) {
+      worldX = Math.max(0, worldX - WALK_SPEED);
+      setFacing("w");
+      moving = true;
+    } else if (keys.right && !keys.left) {
+      worldX = Math.min(maxX, worldX + WALK_SPEED);
+      setFacing("e");
+      moving = true;
+    } else {
+      setFacing("s");
+    }
+
+    characterEl.classList.toggle("walking", moving);
+    const transform = `translateX(${-worldX}px)`;
+    world.style.transform = transform;
+    foreground.style.transform = transform; // stays registered with the background
+
+    const current = Math.min(TILE_COUNT, Math.floor(worldX / scaledTileWidth) + 1);
+    tileIndexEl.textContent = current;
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>
