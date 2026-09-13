@@ -16,6 +16,100 @@ epoch N opens ──▶ players act ──▶ settleBegin() ──▶ VRF ──
                                                            refills, evaluates
 ```
 
+### Why 24 and not 12
+
+The epoch length is not really a pacing dial. It is **how long a player may be
+away before they start losing**, and that is the number that decides churn.
+
+Decay is one point of health per missed epoch, and a Clover has six. So:
+
+| Epoch | A weekend away | Total absence that kills a Clover |
+|---|---|---|
+| 24h | −2 health | 6 days |
+| 12h | −4 health | 3 days |
+
+At 12 hours a busy week costs you the garden. In a game whose stated failure
+mode is *people giving up*, punishing ordinary life is the one thing the design
+cannot afford — every player who quits shrinks the frontier, which is the
+thing §04 says we are measuring. Twelve-hour epochs buy engagement by charging
+retention, and retention is the win condition.
+
+24 hours also lands the growth and death clocks in a sensible ratio: a Clover
+matures in four days and dies in six, so a plant you are actually tending
+outruns its own decay. Shorten the epoch and that ratio is unchanged — but the
+**wall-clock forgiveness** halves, and forgiveness is all the ratio was buying.
+
+**The real lever is not epoch length, it is grace.** `OfflineMode` plus
+`Decay.SLOW` and `GRACE_EPOCHS = 7` already exist: leaving a standing
+instruction before you go buys a week at reduced decay. That is what makes 24h
+survivable for someone with a job, and it is a *choice with a cost* rather than
+immunity. Tune that before you touch `Epoch.DURATION`.
+
+One practical note: `Epoch.DURATION` is a single constant in
+`contracts/src/libraries/Epoch.sol`, so this is a deployment parameter, not an
+architectural decision. Nothing about a demo requires shortening it — that is
+what the web build's test harness is for.
+
+---
+
+## The commons, sized by population
+
+Everything shared scales with **active patches** — a patch with at least one
+living plant. Not signups, not addresses. Somebody who joined and let
+everything die is not drawing from the well and not feeding the commune, and
+the commons should not be sized as though they were.
+
+| Per active patch | Value | Meaning |
+|---|---:|---|
+| `REFILL_PER_PATCH` | 50 | Well refill. **In a steady state this IS the average allowance** |
+| `CAPACITY_PER_PATCH` | 200 | Four epochs of buffer — what a panic eats |
+| `DRAW_CAP_PER_EPOCH` | 80 | The most one patch may take. Exactly `REQ_MAX` |
+| `COMMUNE_GOAL_PER_PATCH` | 25 | Ether dust asked of each patch per cycle |
+
+### The whole difficulty, in two numbers
+
+The requirement is uniform over `{20,25,…,80}` — thirteen buckets, **mean
+exactly 50**. The well refills **50 per patch**. Those two numbers are equal on
+purpose:
+
+> Draw your fair share and you meet the requirement about **half the time**.
+> Draw enough to be certain and you are taking **1.6×** your share, every epoch.
+
+That is the tragedy stated as arithmetic rather than as a theme. Raising
+`REFILL_PER_PATCH` is the single most effective way to make the game kinder.
+
+### The consequence nobody designed but everybody should know
+
+Run the ladder at a 50% meet rate and rarity sorts itself:
+
+| Species | Health | Stages to mature | At ~50% met |
+|---|---:|---:|---|
+| Clover | 6 | 4 | **Survives.** ~4 misses to gain 4 stages, 2 health left |
+| Marigold | 5 | 5 | Marginal |
+| Foxglove | 4 | 5 | Needs overdrawing |
+| Moonflower | 3 | 6 | Dies long before maturing |
+
+A Moonflower needs six met epochs and can absorb two misses. It is **only
+growable by someone consistently taking more than their share** — or by someone
+in a garden where the well is abundant *because everyone else is restrained*.
+
+**Rarity is purchased from the commons.** That is either the best property in
+the game or a bug, depending on whether you want it. It falls straight out of
+the numbers above; do not tune one without re-checking the other.
+
+### The dead patch
+
+Death consumes the seed. Lose every plant and every seed and you cannot act at
+all — watering does nothing, there is nothing to tend. Two ways back, both
+requiring somebody else's world:
+
+1. **Another gardener gives you a seed.**
+2. **You find one in the woodland**, once per epoch.
+
+This is the only terminal-looking state in the game, and it is deliberately not
+terminal. A game about continuing cannot have a dead end you reach by being
+busy — but it can have one you need help out of.
+
 ---
 
 ## Water — the tragedy axis

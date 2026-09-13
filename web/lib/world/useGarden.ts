@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { REQ_MAX, effective, rollRequirement } from "./mechanics";
 import {
-  REQ_MAX, WELL_CAPACITY, WELL_REFILL, effective, rollRequirement,
-} from "./mechanics";
+  COMMUNE_GROWTH, DRAW_CAP_PER_EPOCH, REFILL_PER_PATCH, communeGoal,
+  fairShare, wellCapacity, wellRefill,
+} from "./commons";
 import {
   MY_PLOT, type Plot,
 } from "./map";
@@ -24,9 +26,6 @@ import {
  *  choice you keep making rather than one button that solves the epoch. */
 export const DRAW_STEP = 10;
 
-/** The commune's first goal, and how much harder each one gets. */
-export const COMMUNE_GOAL_0 = 60;
-export const COMMUNE_GROWTH = 1.2;
 
 export type Garden = ReturnType<typeof useGarden>;
 
@@ -47,7 +46,11 @@ export function useGarden() {
   const [activeSeed, setActiveSeed] = useState<string>(STARTING_SPECIES);
   const [dust, setDust] = useState(0);
 
-  const [well, setWell] = useState(WELL_CAPACITY * 0.62);
+  /** Other gardeners with something alive in their patch. No multiplayer yet,
+   *  so this is a dial -- but every shared number is already derived from it,
+   *  which is the part that has to be right before players exist. */
+  const [neighbourPatches, setNeighbourPatches] = useState(0);
+  const [well, setWell] = useState(REFILL_PER_PATCH * 2);
   const [drawn, setDrawn] = useState(0);
   const [epoch, setEpoch] = useState(1);
   const [log, setLog] = useState<Settlement[]>([]);
@@ -55,7 +58,6 @@ export function useGarden() {
 
   /** The commune pool. Nobody is told what filling it does. */
   const [communePool, setCommunePool] = useState(0);
-  const [communeGoal, setCommuneGoal] = useState(COMMUNE_GOAL_0);
   const [communeCycles, setCommuneCycles] = useState(0);
   const [congrats, setCongrats] = useState<number | null>(null);
 
@@ -76,6 +78,22 @@ export function useGarden() {
     [plants],
   );
 
+  /**
+   * A patch counts as active if something is ALIVE in it -- so letting your
+   * garden die shrinks the well and the commune's target for everyone,
+   * including you. Your own patch is one of them, when it has plants.
+   */
+  const activePatches = (plants.length > 0 ? 1 : 0) + neighbourPatches;
+  const capacity = wellCapacity(activePatches);
+  const refill = wellRefill(activePatches);
+  const goal = communeGoal(activePatches, communeCycles);
+  const share = fairShare(activePatches, well);
+  /** Room left under this epoch's personal cap. */
+  const drawRoom = Math.max(0, DRAW_CAP_PER_EPOCH - drawn);
+
+  /** No plants and no seeds: you cannot act at all without help. */
+  const destitute = plants.length === 0 && Object.values(seeds).every((n) => n <= 0);
+
   const seedCount = useCallback((id: string) => seeds[id] ?? 0, [seeds]);
   const totalSeeds = useMemo(
     () => Object.values(seeds).reduce((a, b) => a + b, 0), [seeds],
@@ -85,10 +103,20 @@ export function useGarden() {
   /** The well is debited the FULL raw amount; the plot is credited
    *  effective(amount). That asymmetry is the game. */
   const water = useCallback((units = DRAW_STEP) => {
-    if (well < units) { say("The well is empty."); return; }
-    setWell((w) => w - units);
-    setDrawn((d) => d + effective(units));
-  }, [well, say]);
+    // Two separate limits, and they mean different things. The CAP is a rule
+    // about you: nobody may take more than enough to be certain. The LEVEL is
+    // a fact about everyone: the water is simply not there.
+    const capped = Math.min(units, DRAW_CAP_PER_EPOCH - drawn);
+    if (capped <= 0) {
+      say(`You have taken this epoch's limit of ${DRAW_CAP_PER_EPOCH}.`);
+      return;
+    }
+    const got = Math.min(capped, Math.floor(well));
+    if (got <= 0) { say("The well is empty. Somebody drew it down."); return; }
+    setWell((w) => w - got);
+    setDrawn((d) => d + effective(got));
+    if (got < units) say(`Only ${got} left to take.`);
+  }, [well, drawn, say]);
 
   /* ---- planting --------------------------------------------------------- */
   const plantSeed = useCallback((x: number, y: number) => {
@@ -135,21 +163,24 @@ export function useGarden() {
     // fill the bar more than once and each fill raises the goal, so this has
     // to loop; and calling setState from inside another setState's updater
     // fires twice under StrictMode, which double-counted the cycles.
+    // The goal is DERIVED from active patches and cycles, never stored -- if
+    // it were stored it would go stale the moment somebody's garden died.
     let pool = communePool + give;
-    let goal = communeGoal;
+    let cycles = communeCycles;
     let filled = 0;
-    while (pool >= goal) {
-      pool -= goal;
-      goal = Math.round(goal * COMMUNE_GROWTH);
+    let target = communeGoal(activePatches, cycles);
+    while (pool >= target) {
+      pool -= target;
+      cycles += 1;
       filled += 1;
+      target = communeGoal(activePatches, cycles);
     }
     setCommunePool(pool);
     if (filled > 0) {
-      setCommuneGoal(goal);
-      setCommuneCycles((c) => c + filled);
-      setCongrats(goal);
+      setCommuneCycles(cycles);
+      setCongrats(target);
     }
-  }, [dust, communePool, communeGoal, say]);
+  }, [dust, communePool, communeCycles, activePatches, say]);
 
   const dismissCongrats = useCallback(() => setCongrats(null), []);
 
@@ -168,41 +199,36 @@ export function useGarden() {
     let died = 0;
     const notes: string[] = [];
     const next: Plant[] = [];
-    const returned: Record<string, number> = {};
 
     for (const p of plants) {
       gained += dustFor(p);                     // alive plants always pay
       const r = stepPlant(p, met);
       notes.push(r.note);
       if (r.next) next.push(r.next);
-      else {
-        died += 1;
-        // "I must replant its seeds" -- death costs you the STAGE, not the
-        // species. Harsh enough to hurt, not so harsh you are locked out.
-        returned[p.speciesId] = (returned[p.speciesId] ?? 0) + 1;
-      }
+      else died += 1;
     }
 
+    // DEATH CONSUMES THE SEED. It used to hand it back, which made neglect a
+    // setback you could always walk off -- and meant no player could ever be
+    // in the position the whole mutual-aid idea depends on. Lose everything
+    // and you cannot act at all: the only ways back are another gardener
+    // giving you a seed, or finding one in the woodland.
     setPlants(next);
-    if (Object.keys(returned).length) {
-      setSeeds((s) => {
-        const out = { ...s };
-        for (const k in returned) out[k] = (out[k] ?? 0) + returned[k];
-        return out;
-      });
-    }
     setDust((d) => d + gained);
-    setWell((w) => Math.min(WELL_CAPACITY, w + WELL_REFILL));
+    // Refill and ceiling both follow the population, and the population may
+    // have just changed -- a patch that died this epoch stops counting.
+    const activeAfter = (next.length > 0 ? 1 : 0) + neighbourPatches;
+    setWell((w) => Math.min(wellCapacity(activeAfter), w + wellRefill(activeAfter)));
     setLog((l) => [{ epoch, requirement, met, drawn, dust: gained, died, notes }, ...l].slice(0, 10));
     setDrawn(0);
     setEpoch((e) => e + 1);
-  }, [drawn, epoch, plants]);
+  }, [drawn, epoch, plants, neighbourPatches]);
 
   /* ---- test harness ----------------------------------------------------- */
   /** Draw exactly enough that the epoch cannot be missed, then settle. */
   const skipGood = useCallback(() => {
     setDrawn(REQ_MAX);
-    setWell((w) => Math.max(0, w - REQ_MAX));
+    setWell((w) => Math.max(0, w - REQ_MAX));   // still charged to the commons
     window.setTimeout(() => settleRef.current(REQ_MAX), 0);
   }, []);
   /** Settle having drawn nothing: every plant takes a point. */
@@ -210,14 +236,29 @@ export function useGarden() {
     setDrawn(0);
     window.setTimeout(() => settleRef.current(REQ_MAX), 0);
   }, []);
+  /**
+   * A seed arriving from outside: gifted by another gardener, or found in the
+   * woodland. The only way out of a dead patch, on purpose.
+   *
+   * TODO(wiring): the gift half needs a real transfer -- one address giving a
+   * seed to another. Today it is the same entry point for both sources.
+   */
+  const receiveSeed = useCallback((id: string, from: string) => {
+    setSeeds((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 }));
+    setActiveSeed(id);
+    say(`A ${speciesById(id).name} seed, ${from}.`);
+  }, [say]);
+
   const grantDust = useCallback((n: number) => setDust((d) => d + n), []);
   const grantSeed = useCallback((id: string) =>
     setSeeds((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 })), []);
   const resetAll = useCallback(() => {
     setPlants([]); setSeeds({ [STARTING_SPECIES]: 1 }); setActiveSeed(STARTING_SPECIES);
-    setDust(0); setWell(WELL_CAPACITY * 0.62); setDrawn(0); setEpoch(1); setLog([]);
-    setCommunePool(0); setCommuneGoal(COMMUNE_GOAL_0); setCommuneCycles(0); setCongrats(null);
+    setDust(0); setWell(REFILL_PER_PATCH * 2); setDrawn(0); setEpoch(1); setLog([]);
+    setCommunePool(0); setCommuneCycles(0); setCongrats(null);
   }, []);
+  /** Testing: strip the patch bare, to see the destitute state. */
+  const killAll = useCallback(() => { setPlants([]); setSeeds({}); }, []);
 
   // settle() closes over `drawn`, so the skip helpers cannot call the version
   // they captured -- they would settle against last render's draw. A ref keeps
@@ -227,10 +268,12 @@ export function useGarden() {
   return {
     plants, seeds, seedCount, totalSeeds, activeSeed, setActiveSeed,
     dust, well, drawn, epoch, log, note, mine,
-    communePool, communeGoal, communeCycles, congrats, dismissCongrats,
+    activePatches, neighbourPatches, setNeighbourPatches,
+    capacity, refill, share, drawRoom, destitute,
+    communePool, communeGoal: goal, communeCycles, congrats, dismissCongrats,
     peek, setPeek,
     water, plantSeed, setIntent, toggleIntent, buySeed, donate, settle, say,
-    skipGood, skipBad, grantDust, grantSeed, resetAll,
+    skipGood, skipBad, grantDust, grantSeed, receiveSeed, resetAll, killAll,
     species: SPECIES,
   };
 }

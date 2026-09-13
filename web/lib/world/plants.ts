@@ -29,6 +29,19 @@ export type Species = {
   maxStage: number;
   /** Consecutive healing epochs to win ONE point of health back. */
   epochsForHeal: number;
+  /**
+   * Thirst, as a multiple of the epoch's BASE roll. Clover is exactly 1 --
+   * it is the reference plant, and every other number in the water economy is
+   * expressed against it.
+   *
+   * The band is real: an individual plant rolls its own multiplier out of it
+   * when sown and keeps it for life. So YOUR moonflower's thirst is a fact you
+   * can read off it, while the base is still unknown until settlement. One
+   * layer of hidden information, not two -- doubly-unknown water would make
+   * rare plants a lottery rather than a commitment.
+   */
+  waterMin: number;
+  waterMax: number;
   /** Dust price of a seed. The starting species is free. */
   seedCost: number;
   blurb: string;
@@ -43,21 +56,25 @@ export const SPECIES: Species[] = [
   {
     id: "clover", name: "Clover", rarity: "common",
     maxHealth: 6, baseDust: 1, maxStage: 4, epochsForHeal: 2, seedCost: 0,
+    waterMin: 1.0, waterMax: 1.0,
     blurb: "Hardy and unremarkable. Forgives a bad week.",
   },
   {
     id: "marigold", name: "Marigold", rarity: "uncommon",
     maxHealth: 5, baseDust: 2, maxStage: 5, epochsForHeal: 3, seedCost: 14,
+    waterMin: 1.2, waterMax: 1.5,
     blurb: "Pays better. Notices when you are away.",
   },
   {
     id: "foxglove", name: "Foxglove", rarity: "rare",
     maxHealth: 4, baseDust: 4, maxStage: 5, epochsForHeal: 4, seedCost: 45,
+    waterMin: 1.6, waterMax: 2.0,
     blurb: "Generous and brittle. Three bad epochs is most of its life.",
   },
   {
     id: "moonflower", name: "Moonflower", rarity: "mythic",
     maxHealth: 3, baseDust: 7, maxStage: 6, epochsForHeal: 5, seedCost: 130,
+    waterMin: 2.0, waterMax: 3.0,
     blurb: "Extraordinary, and almost impossible to nurse back.",
   },
 ];
@@ -76,6 +93,9 @@ export type Plant = {
   x: number;
   y: number;
   speciesId: string;
+  /** Rolled out of the species band when sown, fixed for life. This plant's
+   *  requirement each epoch is `round(base * multiplier)`. */
+  multiplier: number;
   health: number;
   stage: number;
   /** Consecutive healing epochs banked toward the next point of health. */
@@ -84,10 +104,32 @@ export type Plant = {
   intent: "grow" | "heal";
 };
 
-export function newPlant(speciesId: string, x: number, y: number): Plant {
+export function newPlant(speciesId: string, x: number, y: number, rand = Math.random): Plant {
   const sp = speciesById(speciesId);
-  return { x, y, speciesId, health: sp.maxHealth, stage: 0, healStreak: 0, intent: "grow" };
+  // Two decimals: enough that no two moonflowers are identical, few enough
+  // that the number on screen is readable.
+  const multiplier = Math.round((sp.waterMin + (sp.waterMax - sp.waterMin) * rand()) * 100) / 100;
+  return {
+    x, y, speciesId, multiplier,
+    health: sp.maxHealth, stage: 0, healStreak: 0, intent: "grow",
+  };
 }
+
+/** A stable key for one plant's tile. Used for per-plant water allocation. */
+export const plantKey = (p: { x: number; y: number }) => `${p.x},${p.y}`;
+
+/** What this plant needs THIS epoch, given the base that was rolled. */
+export const requirementFor = (p: Plant, base: number) => Math.round(base * p.multiplier);
+
+/** The band a plant's requirement can fall in, which the player CAN see. */
+export function requirementBand(p: Plant, reqMin: number, reqMax: number) {
+  return { min: Math.round(reqMin * p.multiplier), max: Math.round(reqMax * p.multiplier) };
+}
+
+/** Sum of thirst across a patch. Everything in the water economy is priced
+ *  against this: fair share, the draw cap, and whether you have over-planted. */
+export const totalMultiplier = (plants: Plant[]) =>
+  plants.reduce((a, p) => a + p.multiplier, 0);
 
 /** Dust a living plant pays THIS epoch. Paid whether or not it was watered --
  *  neglect costs you by killing the plant, not by switching off the tap. */

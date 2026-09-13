@@ -58,7 +58,7 @@ export default function Home() {
         </header>
 
         {adventure
-          ? <AdventureView onLeave={() => setView("garden")} />
+          ? <AdventureView onLeave={() => setView("garden")} garden={garden} />
           : <Overworld
               garden={garden}
               frozen={challenge !== null}

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { REQ_MAX, REQ_MIN, WELL_CAPACITY } from "../../lib/world/mechanics";
+import { REQ_MAX, REQ_MIN } from "../../lib/world/mechanics";
+import {
+  DRAW_CAP_PER_EPOCH, MEAN_REQUIREMENT, REFILL_PER_PATCH,
+} from "../../lib/world/commons";
 import {
   canHeal, dustAtNextStage, dustFor, speciesById, atMaxStage,
 } from "../../lib/world/plants";
@@ -17,12 +20,25 @@ import type { Garden } from "../../lib/world/useGarden";
  */
 export function Hud({ garden }: { garden: Garden }) {
   const [tab, setTab] = useState<"patch" | "seeds" | "commune">("patch");
-  const wellPct = Math.round((garden.well / WELL_CAPACITY) * 100);
+  const wellPct = Math.round((garden.well / Math.max(1, garden.capacity)) * 100);
   const communePct = Math.min(1, garden.communePool / garden.communeGoal);
   const incoming = garden.plants.reduce((a, p) => a + dustFor(p), 0);
 
   return (
     <aside className="ig-hud">
+      {/* Nothing you can do alone. This is the state the whole mutual-aid idea
+          depends on existing, so it is stated plainly rather than softened. */}
+      {garden.destitute && (
+        <div className="ig-destitute">
+          <p className="ig-label">Your patch is dead</p>
+          <p>
+            No plants, no seeds. Watering does nothing and there is nothing to
+            tend. You cannot start again on your own — someone has to give you
+            a seed, or you have to find one in the woodland.
+          </p>
+        </div>
+      )}
+
       {/* ---- the epoch ---- */}
       <div className="ig-hud-row">
         <div className="ig-stat">
@@ -49,18 +65,45 @@ export function Hud({ garden }: { garden: Garden }) {
           )}
         </p>
         <div className="ig-water-btns">
-          <button className="ig-btn ig-btn-quiet" onClick={() => garden.water(10)}>+10</button>
-          <button className="ig-btn ig-btn-quiet" onClick={() => garden.water(25)}>+25</button>
+          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
+            onClick={() => garden.water(10)}>+10</button>
+          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
+            onClick={() => garden.water(garden.share)}>
+            Fair share
+          </button>
+          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
+            onClick={() => garden.water(garden.drawRoom)}>
+            Take {garden.drawRoom}
+          </button>
           <button className="ig-btn" onClick={() => garden.settle()}>
             Settle epoch {garden.epoch}
           </button>
         </div>
         <div className="ig-bar ig-bar-well" style={{ marginTop: ".55rem" }}>
           <i style={{ width: `${wellPct}%` }} />
+          {/* Where your fair share sits on the bar. The interesting decision is
+              whether to cross it, so it has to be visible to be a decision. */}
+          <b className="ig-share-mark"
+             style={{ left: `${Math.min(100, (garden.share / Math.max(1, garden.capacity)) * 100)}%` }} />
         </div>
         <p className="ig-hud-fine">
-          The well: {Math.round(garden.well).toLocaleString()} of{" "}
-          {WELL_CAPACITY.toLocaleString()} — shared with everyone.
+          The well holds <b className="ig-mono">{Math.round(garden.well).toLocaleString()}</b> of{" "}
+          {garden.capacity.toLocaleString()}, refilling{" "}
+          <b className="ig-mono">{garden.refill}</b> an epoch — both sized by{" "}
+          <b className="ig-mono">{garden.activePatches}</b> active{" "}
+          {garden.activePatches === 1 ? "patch" : "patches"}
+          {/* A world with nobody in it still has a well, or there would be no
+              way back into it. The floor is one patch, and saying "0 patches"
+              beside numbers computed from 1 is just a lie. */}
+          {garden.activePatches === 0 && " — held at a one-patch floor"}.
+        </p>
+        <p className="ig-hud-fine ig-share-note">
+          Your fair share is <b className="ig-mono">{garden.share}</b>. The
+          requirement averages <b className="ig-mono">{MEAN_REQUIREMENT}</b>, so
+          taking your share meets it about half the time. Certainty costs{" "}
+          <b className="ig-mono">{DRAW_CAP_PER_EPOCH}</b> — this epoch&apos;s
+          limit, and {(DRAW_CAP_PER_EPOCH / REFILL_PER_PATCH).toFixed(1)}× your
+          share. You have <b className="ig-mono">{garden.drawRoom}</b> left to take.
         </p>
       </div>
 
@@ -176,8 +219,10 @@ export function Hud({ garden }: { garden: Garden }) {
             {garden.communePool} / {garden.communeGoal}
           </p>
           <p className="ig-hud-fine">
-            Everyone&apos;s dust goes into the same bar. Nobody has said what
-            happens when it fills.
+            Everyone&apos;s dust goes into the same bar, and the target is{" "}
+            {garden.activePatches} active{" "}
+            {garden.activePatches === 1 ? "patch" : "patches"} worth — a bigger
+            garden is asked for more. Nobody has said what happens when it fills.
             {garden.communeCycles > 0 && ` It has filled ${garden.communeCycles}×.`}
           </p>
           <div className="ig-water-btns">

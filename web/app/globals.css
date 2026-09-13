@@ -671,3 +671,34 @@ kbd {
   border-radius: 4px;
   cursor: pointer;
 }
+
+/* ---- the commons, sized by population ------------------------------------ */
+
+/* Where your fair share sits on the well bar. The decision is whether to cross
+   it, so it has to be visible or crossing it is an accident. */
+.ig-bar-well { position: relative; overflow: visible; }
+.ig-share-mark {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--ig-ink);
+  opacity: 0.6;
+}
+.ig-share-note { border-left: 2px solid var(--ig-rule); padding-left: 0.55rem; }
+
+/* No plants and no seeds: nothing you can do alone. Stated plainly rather than
+   softened -- this state is what the mutual-aid loop exists for. */
+.ig-destitute {
+  border: 1px solid var(--ig-sev-critical);
+  border-left-width: 3px;
+  background: color-mix(in srgb, var(--ig-sev-critical) 8%, var(--ig-surface));
+  padding: 0.7rem 0.8rem;
+}
+.ig-destitute p:last-child {
+  margin: 0.3rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ig-muted);
+}
+.ig-dest-hint { color: var(--ig-sev-warning) !important; }

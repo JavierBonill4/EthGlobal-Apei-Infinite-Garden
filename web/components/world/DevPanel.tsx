@@ -67,9 +67,31 @@ export function DevPanel({ garden }: { garden: Garden }) {
         <button onClick={() => skipMany(false)}>droughted</button>
       </label>
 
+      {/* Population. Every shared number -- well size, refill, commune target
+          -- is derived from this, and there is no multiplayer to produce it
+          yet, so it is a dial. Watch the well ceiling move when you change it. */}
+      <label className="ig-dev-row">
+        <span>Other active patches</span>
+        <input type="number" min={0} max={999} value={garden.neighbourPatches}
+          onChange={(e) => garden.setNeighbourPatches(Math.max(0, Math.min(999, +e.target.value || 0)))} />
+      </label>
+      <div className="ig-dev-grid">
+        {[0, 5, 50, 500].map((n) => (
+          <button key={n} onClick={() => garden.setNeighbourPatches(n)}>{n} others</button>
+        ))}
+      </div>
+
       <div className="ig-dev-grid">
         <button onClick={() => garden.grantDust(50)}>+50 dust</button>
         <button onClick={() => garden.grantDust(500)}>+500 dust</button>
+      </div>
+
+      {/* The two ways out of a dead patch, and the way into one. */}
+      <div className="ig-dev-grid">
+        <button onClick={() => garden.receiveSeed("clover", "gifted by a neighbour")}>
+          Gift: clover
+        </button>
+        <button onClick={garden.killAll}>Kill patch + seeds</button>
       </div>
       <div className="ig-dev-grid">
         {garden.species.map((sp) => (
