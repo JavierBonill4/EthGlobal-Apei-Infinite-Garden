@@ -55,47 +55,97 @@ what the web build's test harness is for.
 ## The commons, sized by population
 
 Everything shared scales with **active patches** — a patch with at least one
-living plant. Not signups, not addresses. Somebody who joined and let
-everything die is not drawing from the well and not feeding the commune, and
-the commons should not be sized as though they were.
+living plant. Not signups, not addresses.
 
 | Per active patch | Value | Meaning |
 |---|---:|---|
-| `REFILL_PER_PATCH` | 50 | Well refill. **In a steady state this IS the average allowance** |
-| `CAPACITY_PER_PATCH` | 200 | Four epochs of buffer — what a panic eats |
-| `DRAW_CAP_PER_EPOCH` | 80 | The most one patch may take. Exactly `REQ_MAX` |
+| `REFILL_PER_PATCH` | 150 | Well refill, and the ceiling on one patch's share |
+| `CAPACITY_PER_PATCH` | 600 | Four epochs of buffer — what a panic eats |
 | `COMMUNE_GOAL_PER_PATCH` | 25 | Ether dust asked of each patch per cycle |
 
-### The whole difficulty, in two numbers
+---
 
-The requirement is uniform over `{20,25,…,80}` — thirteen buckets, **mean
-exactly 50**. The well refills **50 per patch**. Those two numbers are equal on
-purpose:
+## Water, per plant
 
-> Draw your fair share and you meet the requirement about **half the time**.
-> Draw enough to be certain and you are taking **1.6×** your share, every epoch.
+**Water is given to plants one at a time**, and each plant is judged against
+its own requirement. Pooling it would throw away the only decision that
+matters when the well is short: *which plant do you save*.
 
-That is the tragedy stated as arithmetic rather than as a theme. Raising
-`REFILL_PER_PATCH` is the single most effective way to make the game kinder.
+### The roll is a base, not a requirement
 
-### The consequence nobody designed but everybody should know
+One **base** is rolled per epoch, uniform over `{20,25,…,80}`, mean exactly 50.
+Each plant needs `round(base × its own thirst)`.
 
-Run the ladder at a 50% meet rate and rarity sorts itself:
+| Species | Thirst | Needs, at base 20–80 | Mean |
+|---|---|---|---:|
+| Clover | ×1.0 | 20 – 80 | 50 |
+| Marigold | ×1.2–1.5 | 24 – 120 | 68 |
+| Foxglove | ×1.6–2.0 | 32 – 160 | 90 |
+| Moonflower | ×2.0–3.0 | 40 – 240 | 125 |
 
-| Species | Health | Stages to mature | At ~50% met |
+A plant rolls its own multiplier out of the species band **when sown and keeps
+it for life**. So your particular Moonflower's thirst is a fact you can read
+off it; the base is the only thing hidden. One layer of unknown, not two —
+doubly-unknown water would make rare plants a lottery rather than a commitment.
+
+### The identity the whole economy is built on
+
+```
+3 Clover × 50 mean need  =  150  =  REFILL_PER_PATCH
+```
+
+Three Clovers is exactly break-even against the well, so a patch that size
+meets its requirement about **half the time** on a fair share. Everything else
+is priced against that.
+
+### A fair share is per plant, not per player
+
+`fairShare = min( meanNeed(thirst), REFILL_PER_PATCH, well / patches )`
+
+The first term is the important one and it was a bug before: a lump sum of 150
+handed to a patch with one plant made that plant *immortal*. A Foxglove's worst
+case is `1.8 × 80 = 144`, which fits inside 150 — so it never missed, never
+lost health, and still out-earned three Clovers. Concentration was strictly
+dominant. Scaling the entitlement by thirst puts every composition back on the
+same coin flip:
+
+| Patch | Thirst | Share | Meets |
+|---|---|---:|---:|
+| 3 Clover | ×3.0 | 150 | 54% |
+| 1 Marigold | ×1.35 | 68 | 54% |
+| 1 Foxglove | ×1.8 | 90 | 54% |
+| 1 Moonflower | ×2.5 | 125 | 54% |
+
+**Rarity no longer buys water safety.** It buys dust, and it costs fragility,
+slower healing, and the ceiling below.
+
+### The ceiling, and where the next features go
+
+`REFILL_PER_PATCH` caps a share at 150 however much you plant, so anything
+above thirst ×3.0 is **structurally short** — not expensive, impossible:
+
+| Patch | Mean need | Allotted | |
 |---|---:|---:|---|
-| Clover | 6 | 4 | **Survives.** ~4 misses to gain 4 stages, 2 health left |
-| Marigold | 5 | 5 | Marginal |
-| Foxglove | 4 | 5 | Needs overdrawing |
-| Moonflower | 3 | 6 | Dies long before maturing |
+| 3 Clover | 150 | 150 | sustainable |
+| 1 Moonflower | 125 | 125 | sustainable |
+| 1 Moonflower + 1 Clover | 175 | 150 | short |
+| 3 Moonflower | 375 | 150 | short |
 
-A Moonflower needs six met epochs and can absorb two misses. It is **only
-growable by someone consistently taking more than their share** — or by someone
-in a garden where the well is abundant *because everyone else is restrained*.
+That wall is deliberate. **A second well, lucky rain and water items are what
+move it** — they are the only things that can, which is what makes them worth
+building rather than decorative.
 
-**Rarity is purchased from the commons.** That is either the best property in
-the game or a bug, depending on whether you want it. It falls straight out of
-the numbers above; do not tune one without re-checking the other.
+### Certainty
+
+`drawCap = 80 × thirst` — exactly enough to be sure everything you planted is
+watered, whatever base lands. For three Clovers that is 240 against a 150
+share: **1.6× your share, always**, whatever is in the ground. Planting more
+does not change the price of safety, only what safety costs in absolute water.
+
+There is no `WaterCurve` in this path any more. The curve gave diminishing
+credit on a draw, which made sense when water fed a health bar. Water now meets
+a threshold, and a threshold is binary — over-watering is already worth
+nothing, so a curve would be a second answer to a question that has one.
 
 ### The dead patch
 

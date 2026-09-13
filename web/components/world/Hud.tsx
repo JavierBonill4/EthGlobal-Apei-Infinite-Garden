@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { REQ_MAX, REQ_MIN } from "../../lib/world/mechanics";
-import {
-  DRAW_CAP_PER_EPOCH, MEAN_REQUIREMENT, REFILL_PER_PATCH,
-} from "../../lib/world/commons";
+import { MEAN_REQUIREMENT } from "../../lib/world/commons";
 import {
   canHeal, dustAtNextStage, dustFor, speciesById, atMaxStage,
+  plantKey, requirementBand,
 } from "../../lib/world/plants";
 import type { Garden } from "../../lib/world/useGarden";
 
@@ -56,29 +55,25 @@ export function Hud({ garden }: { garden: Garden }) {
         <p className="ig-label">Water drawn this epoch</p>
         <p className="ig-forborne-v ig-mono">{garden.drawn}</p>
         <p className="ig-forborne-note">
-          Enough is somewhere between <b className="ig-mono">{REQ_MIN}</b> and{" "}
-          <b className="ig-mono">{REQ_MAX}</b>, and nobody finds out which until
-          every draw is locked. Fall short and every plant loses a point of
-          health. Clear it and they grow.
+          A single <b>base</b> between <b className="ig-mono">{REQ_MIN}</b> and{" "}
+          <b className="ig-mono">{REQ_MAX}</b> is rolled at settlement, and each
+          plant needs <b>base × its own thirst</b>. Nobody sees the base until
+          every draw is locked. A plant that falls short loses a point of
+          health; one that clears it grows.
           {garden.peek && (
             <em className="ig-peek"> · testing: it will be rolled at settlement</em>
           )}
         </p>
         <div className="ig-water-btns">
-          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
-            onClick={() => garden.water(10)}>+10</button>
-          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
-            onClick={() => garden.water(garden.share)}>
-            Fair share
-          </button>
-          <button className="ig-btn ig-btn-quiet" disabled={garden.drawRoom <= 0}
-            onClick={() => garden.water(garden.drawRoom)}>
-            Take {garden.drawRoom}
-          </button>
           <button className="ig-btn" onClick={() => garden.settle()}>
             Settle epoch {garden.epoch}
           </button>
         </div>
+        <p className="ig-hud-fine">
+          Water is given to plants one at a time, in the{" "}
+          <b>Patch</b> tab — each plant is judged against its own requirement,
+          so the choice is which one you save.
+        </p>
         <div className="ig-bar ig-bar-well" style={{ marginTop: ".55rem" }}>
           <i style={{ width: `${wellPct}%` }} />
           {/* Where your fair share sits on the bar. The interesting decision is
@@ -97,13 +92,16 @@ export function Hud({ garden }: { garden: Garden }) {
               beside numbers computed from 1 is just a lie. */}
           {garden.activePatches === 0 && " — held at a one-patch floor"}.
         </p>
-        <p className="ig-hud-fine ig-share-note">
-          Your fair share is <b className="ig-mono">{garden.share}</b>. The
-          requirement averages <b className="ig-mono">{MEAN_REQUIREMENT}</b>, so
-          taking your share meets it about half the time. Certainty costs{" "}
-          <b className="ig-mono">{DRAW_CAP_PER_EPOCH}</b> — this epoch&apos;s
-          limit, and {(DRAW_CAP_PER_EPOCH / REFILL_PER_PATCH).toFixed(1)}× your
-          share. You have <b className="ig-mono">{garden.drawRoom}</b> left to take.
+        <p className={garden.overPlanted ? "ig-hud-fine ig-share-note ig-over" : "ig-hud-fine ig-share-note"}>
+          Your fair share is <b className="ig-mono">{garden.share}</b>. On an
+          average base of <b className="ig-mono">{MEAN_REQUIREMENT}</b> your
+          patch needs <b className="ig-mono">{garden.need}</b> to water
+          everything — thirst <b className="ig-mono">×{garden.thirst.toFixed(2)}</b>.
+          {garden.overPlanted
+            ? " You have planted more than the well can carry. Somebody else goes short, or you do."
+            : " That fits inside your share, so a patch this size is sustainable."}
+          {" "}Certainty costs <b className="ig-mono">{garden.cap}</b>, this
+          epoch&apos;s limit. <b className="ig-mono">{garden.drawRoom}</b> left to take.
         </p>
       </div>
 
@@ -128,8 +126,15 @@ export function Hud({ garden }: { garden: Garden }) {
               {garden.plants.map((p) => {
                 const sp = speciesById(p.speciesId);
                 const mendable = canHeal(p);
+                const k = plantKey(p);
+                const band = requirementBand(p, REQ_MIN, REQ_MAX);
+                const has = garden.givenTo(k);
+                // How far along its own worst case this plant is watered.
+                const pct = Math.min(100, (has / Math.max(1, band.max)) * 100);
+                const safe = has >= band.max;
+                const maybe = has >= band.min;
                 return (
-                  <li key={`${p.x},${p.y}`}>
+                  <li key={k}>
                     <div className="ig-plant-head">
                       <b>{sp.name}</b>
                       <span className={`ig-rarity ig-rarity-${sp.rarity}`}>{sp.rarity}</span>
@@ -141,6 +146,30 @@ export function Hud({ garden }: { garden: Garden }) {
                       <span className="ig-hud-fine">
                         {p.health}/{sp.maxHealth} · stage {p.stage}/{sp.maxStage} · {dustFor(p)} dust
                       </span>
+                    </div>
+
+                    {/* Water, for THIS plant. The band is knowable -- it is
+                        this plant's own thirst times the public base range --
+                        so the only unknown is where in it the base lands. */}
+                    <div className="ig-wrow">
+                      <div className="ig-wbar" data-state={safe ? "safe" : maybe ? "maybe" : "short"}>
+                        <i style={{ width: `${pct}%` }} />
+                        <b style={{ left: `${(band.min / band.max) * 100}%` }} />
+                      </div>
+                      <span className="ig-hud-fine">
+                        <b className="ig-mono">{has}</b> given · needs{" "}
+                        <b className="ig-mono">{band.min}–{band.max}</b> (×{p.multiplier})
+                        {safe ? " · certain" : maybe ? " · a gamble" : " · will fall short"}
+                      </span>
+                      <div className="ig-wbtns">
+                        <button onClick={() => garden.unwater(k, 10)} disabled={has <= 0}>−10</button>
+                        <button onClick={() => garden.water(k, 10)}
+                          disabled={garden.drawRoom <= 0}>+10</button>
+                        <button onClick={() => garden.water(k, band.max - has)}
+                          disabled={garden.drawRoom <= 0 || safe}>
+                          to {band.max}
+                        </button>
+                      </div>
                     </div>
                     <div className="ig-intent">
                       <button
@@ -247,10 +276,11 @@ export function Hud({ garden }: { garden: Garden }) {
             <li key={s.epoch} className={s.met ? "" : "missed"}>
               <span className="ig-mono">e{s.epoch}</span>
               <span>
-                needed {s.requirement}, drew {s.drawn} · +{s.dust} dust
+                base {s.requirement} · gave {s.drawn} · {s.metCount}/{s.of} watered
+                · +{s.dust} dust
                 {s.died > 0 && <em> · {s.died} died</em>}
               </span>
-              <b>{s.met ? "met" : "missed"}</b>
+              <b>{s.met ? "all met" : `${s.of - s.metCount} short`}</b>
             </li>
           ))}
         </ol>

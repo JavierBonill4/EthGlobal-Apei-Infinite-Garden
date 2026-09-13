@@ -702,3 +702,59 @@ kbd {
   color: var(--ig-muted);
 }
 .ig-dest-hint { color: var(--ig-sev-warning) !important; }
+
+/* ---- per-plant water ----------------------------------------------------- */
+
+.ig-wrow {
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--ig-rule);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* The bar runs to this plant's WORST case. The tick is its best case, so the
+   gap between them is the part the hidden base decides -- filling past the
+   tick is a gamble, filling past the end is certainty. */
+.ig-wbar {
+  position: relative;
+  height: 10px;
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  overflow: visible;
+}
+.ig-wbar i {
+  display: block;
+  height: 100%;
+  transition: width 160ms ease;
+  background: var(--ig-sev-critical);
+}
+.ig-wbar[data-state="maybe"] i { background: var(--ig-sev-warning); }
+.ig-wbar[data-state="safe"] i { background: var(--ig-sev-good); }
+.ig-wbar b {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--ig-ink);
+  opacity: 0.55;
+}
+
+.ig-wbtns { display: flex; gap: 0.25rem; }
+.ig-wbtns button {
+  font: inherit;
+  font-family: ui-monospace, monospace;
+  font-size: 0.74rem;
+  flex: 1;
+  padding: 0.25rem 0.2rem;
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  color: var(--ig-ink);
+  cursor: pointer;
+}
+.ig-wbtns button:hover:not(:disabled) { border-color: var(--ig-accent); }
+.ig-wbtns button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Planted beyond what the well can carry. Not an error -- a position. */
+.ig-over { border-left-color: var(--ig-sev-warning) !important; color: var(--ig-ink); }

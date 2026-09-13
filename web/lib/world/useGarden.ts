@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { REQ_MAX, effective, rollRequirement } from "./mechanics";
+import { REQ_MAX, rollRequirement } from "./mechanics";
 import {
-  COMMUNE_GROWTH, DRAW_CAP_PER_EPOCH, REFILL_PER_PATCH, communeGoal,
-  fairShare, wellCapacity, wellRefill,
+  REFILL_PER_PATCH, communeGoal, drawCap, fairShare, meanNeed,
+  wellCapacity, wellRefill,
 } from "./commons";
 import {
   MY_PLOT, type Plot,
 } from "./map";
 import {
-  SPECIES, STARTING_SPECIES, dustFor, newPlant, patchWater, speciesById,
-  stepPlant, type Plant,
+  SPECIES, STARTING_SPECIES, dustFor, newPlant, patchWater, plantKey,
+  requirementFor, speciesById, stepPlant, totalMultiplier, type Plant,
 } from "./plants";
 
 /**
@@ -22,8 +22,7 @@ import {
  * wagmi writes should not change a number the player sees.
  */
 
-/** Units drawn from the well per press. Small enough that watering stays a
- *  choice you keep making rather than one button that solves the epoch. */
+/** Units per press of a per-plant water control. */
 export const DRAW_STEP = 10;
 
 
@@ -31,8 +30,12 @@ export type Garden = ReturnType<typeof useGarden>;
 
 export type Settlement = {
   epoch: number;
+  /** The BASE that was rolled. Each plant needed base x its own multiplier. */
   requirement: number;
+  /** Every plant met its own requirement. */
   met: boolean;
+  metCount: number;
+  of: number;
   drawn: number;
   dust: number;
   died: number;
@@ -51,7 +54,14 @@ export function useGarden() {
    *  which is the part that has to be right before players exist. */
   const [neighbourPatches, setNeighbourPatches] = useState(0);
   const [well, setWell] = useState(REFILL_PER_PATCH * 2);
-  const [drawn, setDrawn] = useState(0);
+  /**
+   * Water given to each plant this epoch, keyed by tile.
+   *
+   * Per plant, not per patch: each plant is compared against its OWN
+   * requirement at settlement, so pooling the water would throw away the
+   * decision the whole change exists to create -- which plant do you save.
+   */
+  const [given, setGiven] = useState<Record<string, number>>({});
   const [epoch, setEpoch] = useState(1);
   const [log, setLog] = useState<Settlement[]>([]);
   const [note, setNote] = useState<string | null>(null);
@@ -87,9 +97,21 @@ export function useGarden() {
   const capacity = wellCapacity(activePatches);
   const refill = wellRefill(activePatches);
   const goal = communeGoal(activePatches, communeCycles);
-  const share = fairShare(activePatches, well);
+
+  /** Thirst of everything in the ground. Prices the share, the cap and the need. */
+  const thirst = useMemo(() => totalMultiplier(plants), [plants]);
+  const cap = drawCap(thirst);
+  const need = meanNeed(thirst);
+  /** Entitlement is per PLANT, scaled by thirst -- not a lump sum per player. */
+  const share = fairShare(activePatches, well, thirst);
+  /** Total handed out this epoch, across every plant. */
+  const drawn = useMemo(
+    () => Object.values(given).reduce((a, b) => a + b, 0), [given],
+  );
   /** Room left under this epoch's personal cap. */
-  const drawRoom = Math.max(0, DRAW_CAP_PER_EPOCH - drawn);
+  const drawRoom = Math.max(0, cap - drawn);
+  /** Planted beyond what an average roll and a fair share can carry. */
+  const overPlanted = need > share;
 
   /** No plants and no seeds: you cannot act at all without help. */
   const destitute = plants.length === 0 && Object.values(seeds).every((n) => n <= 0);
@@ -102,21 +124,42 @@ export function useGarden() {
   /* ---- water: Garden.drawWater(plotId, amount) -------------------------- */
   /** The well is debited the FULL raw amount; the plot is credited
    *  effective(amount). That asymmetry is the game. */
-  const water = useCallback((units = DRAW_STEP) => {
-    // Two separate limits, and they mean different things. The CAP is a rule
-    // about you: nobody may take more than enough to be certain. The LEVEL is
-    // a fact about everyone: the water is simply not there.
-    const capped = Math.min(units, DRAW_CAP_PER_EPOCH - drawn);
-    if (capped <= 0) {
-      say(`You have taken this epoch's limit of ${DRAW_CAP_PER_EPOCH}.`);
-      return;
-    }
+  /**
+   * Draw from the well and give it to ONE plant.
+   *
+   * Two separate limits, and they mean different things. The CAP is a rule
+   * about you: nobody may take more than enough to be certain of what they
+   * planted. The LEVEL is a fact about everyone: the water is simply not there.
+   *
+   * Note there is no WaterCurve here any more. The curve gave diminishing
+   * credit on a draw, which made sense when water fed a health bar. Water now
+   * meets a threshold, and a threshold is binary -- over-watering a plant is
+   * already worth nothing, so a curve on top would be a second answer to a
+   * question that has one.
+   */
+  const water = useCallback((key: string, units = DRAW_STEP) => {
+    const capped = Math.min(units, cap - drawn);
+    if (capped <= 0) { say(`You have taken this epoch's limit of ${cap}.`); return; }
     const got = Math.min(capped, Math.floor(well));
     if (got <= 0) { say("The well is empty. Somebody drew it down."); return; }
     setWell((w) => w - got);
-    setDrawn((d) => d + effective(got));
+    setGiven((g) => ({ ...g, [key]: (g[key] ?? 0) + got }));
     if (got < units) say(`Only ${got} left to take.`);
-  }, [well, drawn, say]);
+  }, [well, drawn, cap, say]);
+
+  /** Take water back off a plant and return it to the well. Mistakes in an
+   *  allocation puzzle should be correctable before settlement, not after. */
+  const unwater = useCallback((key: string, units = DRAW_STEP) => {
+    setGiven((g) => {
+      const had = g[key] ?? 0;
+      const back = Math.min(units, had);
+      if (back <= 0) return g;
+      setWell((w) => w + back);
+      return { ...g, [key]: had - back };
+    });
+  }, []);
+
+  const givenTo = useCallback((key: string) => given[key] ?? 0, [given]);
 
   /* ---- planting --------------------------------------------------------- */
   const plantSeed = useCallback((x: number, y: number) => {
@@ -192,21 +235,28 @@ export function useGarden() {
    * roll. Production has no such parameter, obviously.
    */
   const settle = useCallback((forced?: number) => {
-    const requirement = forced ?? rollRequirement();
-    const met = drawn >= requirement;
+    // The roll is a BASE now, not a finished requirement. Each plant scales it
+    // by its own multiplier, so one epoch can water the clover and drown
+    // nothing else.
+    const base = forced ?? rollRequirement();
 
     let gained = 0;
     let died = 0;
+    let metCount = 0;
     const notes: string[] = [];
     const next: Plant[] = [];
 
     for (const p of plants) {
       gained += dustFor(p);                     // alive plants always pay
+      const req = requirementFor(p, base);
+      const met = (given[plantKey(p)] ?? 0) >= req;
+      if (met) metCount += 1;
       const r = stepPlant(p, met);
-      notes.push(r.note);
+      notes.push(`${r.note} (needed ${req}, had ${given[plantKey(p)] ?? 0})`);
       if (r.next) next.push(r.next);
       else died += 1;
     }
+    const met = plants.length > 0 && metCount === plants.length;
 
     // DEATH CONSUMES THE SEED. It used to hand it back, which made neglect a
     // setback you could always walk off -- and meant no player could ever be
@@ -219,21 +269,34 @@ export function useGarden() {
     // have just changed -- a patch that died this epoch stops counting.
     const activeAfter = (next.length > 0 ? 1 : 0) + neighbourPatches;
     setWell((w) => Math.min(wellCapacity(activeAfter), w + wellRefill(activeAfter)));
-    setLog((l) => [{ epoch, requirement, met, drawn, dust: gained, died, notes }, ...l].slice(0, 10));
-    setDrawn(0);
+    setLog((l) => [{
+      epoch, requirement: base, met, drawn, dust: gained, died, notes,
+      metCount, of: plants.length,
+    }, ...l].slice(0, 10));
+    setGiven({});
     setEpoch((e) => e + 1);
-  }, [drawn, epoch, plants, neighbourPatches]);
+  }, [given, drawn, epoch, plants, neighbourPatches]);
 
   /* ---- test harness ----------------------------------------------------- */
   /** Draw exactly enough that the epoch cannot be missed, then settle. */
+  /** Give every plant exactly what a worst-case base would demand, then settle
+   *  against that base. Still charged to the commons -- the cheat is the
+   *  certainty, not free water. */
   const skipGood = useCallback(() => {
-    setDrawn(REQ_MAX);
-    setWell((w) => Math.max(0, w - REQ_MAX));   // still charged to the commons
+    const alloc: Record<string, number> = {};
+    let total = 0;
+    for (const p of plants) {
+      const need = requirementFor(p, REQ_MAX);
+      alloc[plantKey(p)] = need;
+      total += need;
+    }
+    setGiven(alloc);
+    setWell((w) => Math.max(0, w - total));
     window.setTimeout(() => settleRef.current(REQ_MAX), 0);
-  }, []);
-  /** Settle having drawn nothing: every plant takes a point. */
+  }, [plants]);
+  /** Settle having given nothing: every plant takes a point. */
   const skipBad = useCallback(() => {
-    setDrawn(0);
+    setGiven({});
     window.setTimeout(() => settleRef.current(REQ_MAX), 0);
   }, []);
   /**
@@ -254,7 +317,7 @@ export function useGarden() {
     setSeeds((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 })), []);
   const resetAll = useCallback(() => {
     setPlants([]); setSeeds({ [STARTING_SPECIES]: 1 }); setActiveSeed(STARTING_SPECIES);
-    setDust(0); setWell(REFILL_PER_PATCH * 2); setDrawn(0); setEpoch(1); setLog([]);
+    setDust(0); setWell(REFILL_PER_PATCH * 2); setGiven({}); setEpoch(1); setLog([]);
     setCommunePool(0); setCommuneCycles(0); setCongrats(null);
   }, []);
   /** Testing: strip the patch bare, to see the destitute state. */
@@ -270,6 +333,7 @@ export function useGarden() {
     dust, well, drawn, epoch, log, note, mine,
     activePatches, neighbourPatches, setNeighbourPatches,
     capacity, refill, share, drawRoom, destitute,
+    thirst, cap, need, overPlanted, given, givenTo, unwater,
     communePool, communeGoal: goal, communeCycles, congrats, dismissCongrats,
     peek, setPeek,
     water, plantSeed, setIntent, toggleIntent, buySeed, donate, settle, say,

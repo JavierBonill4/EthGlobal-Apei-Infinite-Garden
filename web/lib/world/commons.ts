@@ -110,10 +110,22 @@ export function communeGoal(activePatches: number, cycles: number) {
  * exceed it -- and a number you cannot see is not a decision, it is an
  * accident.
  */
-export function fairShare(activePatches: number, wellLevel: number) {
+export function fairShare(activePatches: number, wellLevel: number, totalMultiplier: number) {
   const n = clampPatches(activePatches);
-  // You cannot take a share of water that is not there.
-  return Math.max(0, Math.min(REFILL_PER_PATCH, Math.floor(wellLevel / n)));
+  return Math.max(0, Math.min(
+    // What this patch actually needs on an average roll. A share is an
+    // entitlement per PLANT, not a lump sum per player -- 50 for each Clover,
+    // scaled by thirst. Without this a patch with one plant got three plants'
+    // worth of water and the plant became immortal: a Foxglove's worst case
+    // (1.8 x 80 = 144) fits inside 150, so it never missed and still
+    // out-earned three Clovers. Concentration was strictly dominant.
+    meanNeed(totalMultiplier),
+    // What the commons allots a patch, however much it planted. This is the
+    // ceiling that makes three Moonflowers impossible rather than expensive.
+    REFILL_PER_PATCH,
+    // And you cannot take a share of water that is not there.
+    Math.floor(wellLevel / n),
+  ));
 }
 
 /**
