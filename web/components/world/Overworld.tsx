@@ -13,6 +13,7 @@ import {
 import {
   canHeal, plantBand, plantScale, speciesById, type Plant,
 } from "../../lib/world/plants";
+import { speciesIconAsset } from "../art/ArtLayer";
 import type { Garden } from "../../lib/world/useGarden";
 
 const SCALE = 2;            // world pixels -> screen pixels
@@ -48,8 +49,13 @@ function passable(fromX: number, fromY: number, toX: number, toY: number) {
 function PlantPips({ plant }: { plant: Plant }) {
   const sp = speciesById(plant.speciesId);
   const c = tileCentre(plant.x, plant.y);
+  const icon = speciesIconAsset(sp.id);
   return (
     <span className="ig-pips" style={{ left: c.px, top: c.py - 44, zIndex: depth(plant.y + 0.5) + 2 }}>
+      {icon && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="ig-pips-icon" src={icon} alt="" title={sp.name} />
+      )}
       <span className="ig-pip-row">
         {Array.from({ length: sp.maxHealth }, (_, i) => (
           <i key={i} className={i < plant.health ? "on" : ""} />

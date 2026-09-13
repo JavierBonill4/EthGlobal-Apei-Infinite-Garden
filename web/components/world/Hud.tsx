@@ -5,6 +5,7 @@ import { REQ_MAX, REQ_MIN, WELL_CAPACITY } from "../../lib/world/mechanics";
 import {
   canHeal, dustAtNextStage, dustFor, speciesById, atMaxStage,
 } from "../../lib/world/plants";
+import { speciesIconAsset } from "../art/ArtLayer";
 import type { Garden } from "../../lib/world/useGarden";
 
 /**
@@ -88,7 +89,13 @@ export function Hud({ garden }: { garden: Garden }) {
                 return (
                   <li key={`${p.x},${p.y}`}>
                     <div className="ig-plant-head">
-                      <b>{sp.name}</b>
+                      <span className="ig-plant-name">
+                        {speciesIconAsset(sp.id) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img className="ig-seed-icon" src={speciesIconAsset(sp.id)!} alt="" />
+                        )}
+                        <b>{sp.name}</b>
+                      </span>
                       <span className={`ig-rarity ig-rarity-${sp.rarity}`}>{sp.rarity}</span>
                     </div>
                     <div className="ig-pip-row ig-pip-row-hud">
@@ -142,7 +149,13 @@ export function Hud({ garden }: { garden: Garden }) {
               return (
                 <li key={sp.id} className={garden.activeSeed === sp.id ? "on" : ""}>
                   <button className="ig-seed-pick" onClick={() => garden.setActiveSeed(sp.id)}>
-                    <b>{sp.name}</b>
+                    <span className="ig-plant-name">
+                      {speciesIconAsset(sp.id) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img className="ig-seed-icon" src={speciesIconAsset(sp.id)!} alt="" />
+                      )}
+                      <b>{sp.name}</b>
+                    </span>
                     <span className={`ig-rarity ig-rarity-${sp.rarity}`}>{sp.rarity}</span>
                     <small>
                       {sp.maxHealth} health · {sp.baseDust} dust · heals every {sp.epochsForHeal}

@@ -45,6 +45,15 @@ export function overlayAsset(kind: "scarred" | "healed"): string {
   return `/art/${manifest.overlays[kind]}`;
 }
 
+/** Seed/species icon, by species id (see web/lib/world/plants.ts). Null for
+ *  an id the manifest doesn't know, so a caller can fall back gracefully
+ *  instead of rendering a broken image. */
+export function speciesIconAsset(id: string): string | null {
+  const plants = manifest.plants as Record<string, string>;
+  const path = plants[id];
+  return path ? `/art/${path}` : null;
+}
+
 /**
  * One plot. Deliberately dumb: it takes health numbers and renders, with no
  * knowledge of contracts or queries.

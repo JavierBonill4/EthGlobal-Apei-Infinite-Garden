@@ -263,6 +263,32 @@ clearly at small size.
 `band-meter.svg` is the hardest and most important asset in the list. See
 `docs/DESIGN.md` §02 for what it has to express.
 
+### Plants — `art/plants/`
+
+One icon per species, shown in the seed picker and on a planted tile in the
+world. Stats live in `web/lib/world/plants.ts`, not here — this folder is
+art only, keyed by species id in `manifest.json`'s `plants` block.
+
+| File | Species | Rarity |
+|---|---|---|
+| `witchgrass.png` | Witchgrass | common |
+| `pennywort.png` | Pennywort | common |
+| `bracken.png` | Bracken | common |
+| `snowpea.png` | Snowpea | uncommon |
+| `hosta.png` | Hosta | uncommon |
+| `tulip.png` | Tulip | uncommon |
+| `hydrangea.png` | Hydrangea | rare |
+| `oxeye-daisy.png` | Oxeye Daisy | rare |
+| `morning-glory.png` | Morning Glory | rare |
+| `calla-lily.png` | Calla Lily | mythic |
+| `heirloom-rose.png` | Heirloom Rose | mythic |
+| `stargazer-lily.png` | Stargazer Lily | mythic |
+
+Current set is black linework on a transparent ground, 200×200, inverted in
+CSS for dark mode (`.ig-seed-icon`, `.ig-pips-icon` in `globals.css`) rather
+than drawn twice — the same trick used for any single-colour glyph in this
+project. A future pass in full colour should drop that filter.
+
 ---
 
 ## Palette

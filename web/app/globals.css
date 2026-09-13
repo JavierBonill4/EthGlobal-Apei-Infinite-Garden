@@ -478,6 +478,22 @@ kbd {
   padding: 0 3px;
   border-radius: 2px;
 }
+/* Which species this tile is, at a glance while walking -- small enough not
+   to compete with the health pips, which are the number that actually
+   matters this epoch. */
+.ig-pips-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 2px;
+  padding: 1px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ig-pips-icon { filter: invert(1); background: rgba(20, 32, 27, 0.72); }
+}
+:root[data-theme="dark"] .ig-pips-icon { filter: invert(1); background: rgba(20, 32, 27, 0.72); }
+
 .ig-pip-row { display: flex; gap: 1.5px; }
 .ig-pip-row i {
   width: 4px;
@@ -518,6 +534,22 @@ kbd {
   padding: 0.5rem 0.6rem;
 }
 .ig-plant-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+
+/* Species icon + name, wherever a plant is named: the patch list and the
+   seed picker both use this so a species reads the same in either tab. */
+.ig-plant-name { display: flex; align-items: center; gap: 0.35rem; }
+.ig-seed-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex: none;
+  /* Icons are black linework on transparent -- invert them in dark mode
+     rather than drawing a second set, same trick as any single-colour glyph. */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ig-seed-icon { filter: invert(1); }
+}
+:root[data-theme="dark"] .ig-seed-icon { filter: invert(1); }
 
 .ig-rarity {
   font-family: ui-monospace, monospace;

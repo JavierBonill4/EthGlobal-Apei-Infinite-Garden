@@ -37,6 +37,21 @@
       "lanternFox": "creatures/lantern-fox.svg"
     }
   },
+  "plants": {
+    "$comment": "Seed/species icons for the picker and patch list. Stats live in web/lib/world/plants.ts, not here -- this is art only. Keyed by species id.",
+    "witchgrass": "plants/witchgrass.png",
+    "pennywort": "plants/pennywort.png",
+    "bracken": "plants/bracken.png",
+    "snowpea": "plants/snowpea.png",
+    "hosta": "plants/hosta.png",
+    "tulip": "plants/tulip.png",
+    "hydrangea": "plants/hydrangea.png",
+    "oxeye-daisy": "plants/oxeye-daisy.png",
+    "morning-glory": "plants/morning-glory.png",
+    "calla-lily": "plants/calla-lily.png",
+    "heirloom-rose": "plants/heirloom-rose.png",
+    "stargazer-lily": "plants/stargazer-lily.png"
+  },
   "ui": {
     "wellGauge": "ui/well-gauge.svg",
     "bandMeter": "ui/band-meter.svg",

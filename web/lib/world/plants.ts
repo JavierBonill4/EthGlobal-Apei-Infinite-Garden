@@ -35,30 +35,79 @@ export type Species = {
 };
 
 /**
- * TODO(tuning): every number here is a first guess. The shape is what matters:
- * dust goes up with rarity, health goes down, healing gets slower. Keep those
- * three moving in those directions and the trade survives retuning.
+ * TWELVE SPECIES, THREE PER RARITY
+ *
+ * The set (and its order) comes from a hand-drawn icon set, ranked by the
+ * artist from most humble to most prestigious -- witchgrass first, stargazer
+ * lily last. That ranking IS the rarity ladder: every field moves in the
+ * direction the rarity trade demands (health down, dust up, healing slower,
+ * seed cost up) as you read down the list. Numbers are a first guess --
+ * TODO(tuning) -- but the shape is load-bearing, not the exact digits.
  */
 export const SPECIES: Species[] = [
+  // -- common: cheap, tough, pays almost nothing --
   {
-    id: "clover", name: "Clover", rarity: "common",
-    maxHealth: 6, baseDust: 1, maxStage: 4, epochsForHeal: 2, seedCost: 0,
-    blurb: "Hardy and unremarkable. Forgives a bad week.",
+    id: "witchgrass", name: "Witchgrass", rarity: "common",
+    maxHealth: 7, baseDust: 1, maxStage: 3, epochsForHeal: 2, seedCost: 0,
+    blurb: "Grows in the cracks. Nothing kills it and nothing pays for it.",
   },
   {
-    id: "marigold", name: "Marigold", rarity: "uncommon",
+    id: "pennywort", name: "Pennywort", rarity: "common",
+    maxHealth: 6, baseDust: 1, maxStage: 4, epochsForHeal: 2, seedCost: 5,
+    blurb: "Small, round, and patient. A step up that barely costs anything.",
+  },
+  {
+    id: "bracken", name: "Bracken", rarity: "common",
+    maxHealth: 6, baseDust: 2, maxStage: 4, epochsForHeal: 3, seedCost: 10,
+    blurb: "Unrolls slow, frond by frond. Common, but never in a hurry.",
+  },
+  // -- uncommon: a real trade starts here --
+  {
+    id: "snowpea", name: "Snowpea", rarity: "uncommon",
     maxHealth: 5, baseDust: 2, maxStage: 5, epochsForHeal: 3, seedCost: 14,
-    blurb: "Pays better. Notices when you are away.",
+    blurb: "Pods before petals. Pays out early, dies out faster than grass ever would.",
   },
   {
-    id: "foxglove", name: "Foxglove", rarity: "rare",
+    id: "hosta", name: "Hosta", rarity: "uncommon",
+    maxHealth: 5, baseDust: 3, maxStage: 5, epochsForHeal: 3, seedCost: 20,
+    blurb: "Broad leaves, broad appetite. Notices a dry week.",
+  },
+  {
+    id: "tulip", name: "Tulip", rarity: "uncommon",
+    maxHealth: 4, baseDust: 3, maxStage: 5, epochsForHeal: 4, seedCost: 28,
+    blurb: "One bloom, all the risk in a single stem.",
+  },
+  // -- rare: generous, and it shows every bruise --
+  {
+    id: "hydrangea", name: "Hydrangea", rarity: "rare",
     maxHealth: 4, baseDust: 4, maxStage: 5, epochsForHeal: 4, seedCost: 45,
-    blurb: "Generous and brittle. Three bad epochs is most of its life.",
+    blurb: "A whole bouquet on one root. Generous, and it shows every bruise.",
   },
   {
-    id: "moonflower", name: "Moonflower", rarity: "mythic",
+    id: "oxeye-daisy", name: "Oxeye Daisy", rarity: "rare",
+    maxHealth: 4, baseDust: 5, maxStage: 6, epochsForHeal: 4, seedCost: 58,
+    blurb: "Looks common. Isn't -- ask its dust yield.",
+  },
+  {
+    id: "morning-glory", name: "Morning Glory", rarity: "rare",
+    maxHealth: 3, baseDust: 5, maxStage: 6, epochsForHeal: 5, seedCost: 72,
+    blurb: "Opens once a day, on your best behaviour only.",
+  },
+  // -- mythic: extraordinary, and almost impossible to nurse back --
+  {
+    id: "calla-lily", name: "Calla Lily", rarity: "mythic",
     maxHealth: 3, baseDust: 7, maxStage: 6, epochsForHeal: 5, seedCost: 130,
-    blurb: "Extraordinary, and almost impossible to nurse back.",
+    blurb: "Elegant and thin-skinned. Two bad epochs undoes a season of care.",
+  },
+  {
+    id: "heirloom-rose", name: "Heirloom Rose", rarity: "mythic",
+    maxHealth: 3, baseDust: 8, maxStage: 7, epochsForHeal: 6, seedCost: 170,
+    blurb: "Old stock, expensive stock. A thorn for every point of health it lacks.",
+  },
+  {
+    id: "stargazer-lily", name: "Stargazer Lily", rarity: "mythic",
+    maxHealth: 2, baseDust: 10, maxStage: 7, epochsForHeal: 6, seedCost: 220,
+    blurb: "The rarest bloom in the garden, and the easiest to lose.",
   },
 ];
 
@@ -66,7 +115,7 @@ export const speciesById = (id: string) =>
   SPECIES.find((s) => s.id === id) ?? SPECIES[0];
 
 /** The seed every farmer joins with. */
-export const STARTING_SPECIES = "clover";
+export const STARTING_SPECIES = "witchgrass";
 
 /** Each stage adds this fraction of base dust. "Stats get slightly increased." */
 export const STAGE_DUST_BONUS = 0.5;
@@ -152,8 +201,9 @@ export function stepPlant(p: Plant, met: boolean): { next: Plant | null; note: s
 
 /**
  * Which bed sprite to draw. There are four, and no new art is being made, so
- * health maps onto them as a fraction of THIS species' max -- a mythic on 2 of
- * 3 is in better shape than a clover on 2 of 6, and should look it.
+ * health maps onto them as a fraction of THIS species' max -- a stargazer
+ * lily on 1 of 2 is in better shape than a witchgrass on 2 of 7, and should
+ * look it.
  */
 export function plantBand(p: Plant): "thriving" | "steady" | "stressed" | "dying" {
   const sp = speciesById(p.speciesId);
