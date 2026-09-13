@@ -452,3 +452,222 @@ kbd {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
   pointer-events: none;
 }
+
+/* ==========================================================================
+   PLANTS, SEEDS, DUST, THE COMMUNE
+   ========================================================================== */
+
+/* Health pips above a plant, in world space. Always on: these are the numbers
+   the whole loop turns on, and hiding them behind a click would mean walking
+   to every tile to find out the patch is in trouble. */
+.ig-pips {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ig-pips b {
+  font-family: ui-monospace, monospace;
+  font-size: 7px;
+  color: #26383a;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0 3px;
+  border-radius: 2px;
+}
+.ig-pip-row { display: flex; gap: 1.5px; }
+.ig-pip-row i {
+  width: 4px;
+  height: 4px;
+  background: rgba(38, 56, 58, 0.22);
+  border-radius: 1px;
+}
+.ig-pip-row i.on { background: var(--ig-sev-good); }
+
+.ig-pip-row-hud { align-items: center; gap: 3px; margin: 0.25rem 0; }
+.ig-pip-row-hud i { width: 8px; height: 8px; border-radius: 2px; }
+.ig-pip-row-hud .ig-hud-fine { margin-left: 0.4rem; }
+
+.ig-water-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.ig-water-btns .ig-btn { flex: 1; min-width: 4rem; }
+.ig-peek { font-style: normal; color: var(--ig-sev-warning); }
+
+.ig-subtabs { display: flex; gap: 0.25rem; }
+.ig-subtabs button {
+  font: inherit;
+  font-size: 0.82rem;
+  flex: 1;
+  padding: 0.35rem 0.3rem;
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  color: var(--ig-muted);
+  cursor: pointer;
+}
+.ig-subtabs button.on { color: var(--ig-ink); border-color: var(--ig-accent); }
+
+.ig-panel-body { display: flex; flex-direction: column; gap: 0.55rem; }
+.ig-empty { margin: 0; font-size: 0.9rem; color: var(--ig-muted); line-height: 1.5; }
+
+.ig-plants, .ig-seeds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.ig-plants li, .ig-seeds li {
+  border: 1px solid var(--ig-rule);
+  background: var(--ig-surface-2);
+  padding: 0.5rem 0.6rem;
+}
+.ig-plant-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+
+.ig-rarity {
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ig-rarity-common { color: var(--ig-muted); }
+.ig-rarity-uncommon { color: var(--ig-sev-good); }
+.ig-rarity-rare { color: var(--ig-accent); }
+.ig-rarity-mythic { color: #8a5fb0; }
+
+/* The per-plant decision, which is where the interesting play is: push the
+   healthy one, or nurse the dying one. */
+.ig-intent { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-top: 0.4rem; }
+.ig-intent button {
+  font: inherit;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  color: var(--ig-muted);
+  cursor: pointer;
+  text-align: left;
+}
+.ig-intent button small { font-size: 0.68rem; opacity: 0.85; }
+.ig-intent button.on { color: var(--ig-ink); border-color: var(--ig-accent); background: color-mix(in srgb, var(--ig-accent) 10%, var(--ig-surface)); }
+.ig-intent button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ig-seed-pick {
+  font: inherit;
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.ig-seed-pick small { font-family: ui-monospace, monospace; font-size: 0.68rem; color: var(--ig-muted); }
+.ig-seed-pick em { font-style: normal; font-size: 0.78rem; color: var(--ig-muted); }
+.ig-seeds li.on { border-color: var(--ig-accent); }
+.ig-seed-buy { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.4rem; }
+
+/* One bar, no explanation. You are asked to give to something whose payoff
+   you cannot evaluate -- that is the mechanic, so the UI must not resolve it. */
+.ig-commune-bar {
+  height: 18px;
+  background: var(--ig-surface-2);
+  border: 1px solid var(--ig-rule);
+  overflow: hidden;
+}
+.ig-commune-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ig-accent), #8a5fb0);
+  transition: width 260ms ease;
+}
+.ig-commune-n { margin: 0.3rem 0 0; font-size: 0.9rem; }
+
+.ig-global-note {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  z-index: 40;
+  background: var(--ig-surface);
+  border: 1px solid var(--ig-rule);
+  border-left: 2px solid var(--ig-accent);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  max-width: 32rem;
+}
+
+/* ---- test harness ------------------------------------------------------- */
+
+.ig-dev-open {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 60;
+  font-family: ui-monospace, monospace;
+  font-size: 0.76rem;
+  padding: 0.4rem 0.7rem;
+  background: #2b2f33;
+  color: #e7eee9;
+  border: 1px solid #4a5158;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.ig-dev-open:hover { opacity: 1; }
+
+.ig-dev {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 60;
+  width: 17rem;
+  background: #22262a;
+  color: #e7eee9;
+  border: 1px solid #454c53;
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.ig-dev .ig-label, .ig-dev .ig-hud-fine { color: #9fb0a9; }
+.ig-dev-head { display: flex; align-items: center; justify-content: space-between; }
+.ig-dev-head button { background: none; border: none; color: #9fb0a9; font-size: 1.1rem; cursor: pointer; }
+.ig-dev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+.ig-dev button:not(.ig-dev-danger):not(.ig-dev-head button) {
+  font: inherit;
+  font-size: 0.76rem;
+  padding: 0.32rem 0.4rem;
+  background: #2d3339;
+  color: #e7eee9;
+  border: 1px solid #454c53;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ig-dev button:hover { border-color: #7fe3c9; }
+.ig-dev-row { display: flex; align-items: center; gap: 0.3rem; }
+.ig-dev-row input {
+  width: 3.2rem;
+  font: inherit;
+  font-size: 0.76rem;
+  background: #2d3339;
+  color: #e7eee9;
+  border: 1px solid #454c53;
+  border-radius: 4px;
+  padding: 0.25rem 0.35rem;
+}
+.ig-dev-check { display: flex; gap: 0.45rem; align-items: flex-start; line-height: 1.35; }
+.ig-dev-check small { display: block; color: #d8a97a; font-size: 0.68rem; }
+.ig-dev-danger {
+  font: inherit;
+  font-size: 0.76rem;
+  padding: 0.35rem;
+  background: #3a2a2c;
+  color: #f0cdd2;
+  border: 1px solid #6b4348;
+  border-radius: 4px;
+  cursor: pointer;
+}

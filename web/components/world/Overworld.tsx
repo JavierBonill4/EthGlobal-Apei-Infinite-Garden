@@ -7,10 +7,12 @@ import {
 } from "../../lib/world/camera";
 import {
   ALL_FENCES, EXITS, MAP_H, MAP_W, STONES, TREES,
-  TROUGH, WELL, PLAYER_START, edgeBlocked, groundAt, plotAt, solidAt,
+  TROUGH, WELL, PLAYER_START, MY_PLOT, edgeBlocked, groundAt, plotAt, solidAt,
   type Exit,
 } from "../../lib/world/map";
-import { bandFor } from "../../lib/world/mechanics";
+import {
+  canHeal, plantBand, plantScale, speciesById, type Plant,
+} from "../../lib/world/plants";
 import type { Garden } from "../../lib/world/useGarden";
 
 const SCALE = 2;            // world pixels -> screen pixels
@@ -19,7 +21,8 @@ const RADIUS = 0.22;        // player half-width, in tiles
 
 type Facing = "n" | "s" | "e" | "w";
 export type Target =
-  | { kind: "water"; label: string }
+  | { kind: "plant"; label: string; x: number; y: number }
+  | { kind: "tend"; label: string; x: number; y: number }
   | { kind: "well"; label: string }
   | { kind: "exit"; label: string; exit: Exit }
   | null;
@@ -33,6 +36,31 @@ function passable(fromX: number, fromY: number, toX: number, toY: number) {
   if (solidAt(tt.x, tt.y)) return false;
   if (tt.x !== ft.x) return !edgeBlocked(ft.x, ft.y, tt.x > ft.x ? "e" : "w");
   return !edgeBlocked(ft.x, ft.y, tt.y > ft.y ? "s" : "n");
+}
+
+/**
+ * Health, stage and standing instruction, above the plant.
+ *
+ * Small and always on, because these are the numbers the whole loop turns on
+ * and hiding them behind a click would mean walking to every tile to find out
+ * whether the patch is in trouble.
+ */
+function PlantPips({ plant }: { plant: Plant }) {
+  const sp = speciesById(plant.speciesId);
+  const c = tileCentre(plant.x, plant.y);
+  return (
+    <span className="ig-pips" style={{ left: c.px, top: c.py - 44, zIndex: depth(plant.y + 0.5) + 2 }}>
+      <span className="ig-pip-row">
+        {Array.from({ length: sp.maxHealth }, (_, i) => (
+          <i key={i} className={i < plant.health ? "on" : ""} />
+        ))}
+      </span>
+      <b>
+        {plant.stage}/{sp.maxStage}
+        {plant.intent === "heal" && canHeal(plant) ? " ✚" : ""}
+      </b>
+    </span>
+  );
 }
 
 export function Overworld({
@@ -70,11 +98,28 @@ export function Overworld({
     for (const e of EXITS) {
       if (near(e, 1.8)) return { kind: "exit", label: e.label, exit: e };
     }
-    if (near(WELL, 1.3)) return { kind: "well", label: "Read the well" };
-    const plot = plotAt(Math.floor(x), Math.floor(y));
-    if (plot?.mine) return { kind: "water", label: "Water this row" };
+    if (near(WELL, 1.3)) return { kind: "well", label: "Draw from the well" };
+
+    // Standing ON a tile of your own plot: either bare dirt you can sow, or
+    // something growing you can give an instruction to.
+    const tx = Math.floor(x), ty = Math.floor(y);
+    const plot = plotAt(tx, ty);
+    if (plot?.mine) {
+      const here = garden.plants.find((pl) => pl.x === tx && pl.y === ty);
+      if (!here) {
+        const sp = speciesById(garden.activeSeed);
+        return garden.seedCount(garden.activeSeed) > 0
+          ? { kind: "plant", label: `Sow a ${sp.name} seed`, x: tx, y: ty }
+          : null;
+      }
+      const sp = speciesById(here.speciesId);
+      const lbl = here.intent === "grow"
+        ? (canHeal(here) ? `${sp.name}: set to HEAL instead of grow` : `${sp.name}: unhurt, will grow`)
+        : `${sp.name}: set to GROW instead of heal`;
+      return { kind: "tend", label: lbl, x: tx, y: ty };
+    }
     return null;
-  }, []);
+  }, [garden]);
 
   /* ---- the loop ---- */
   useEffect(() => {
@@ -124,7 +169,7 @@ export function Overworld({
         world.current.style.transform = `scale(${SCALE}) translate(${-cx}px, ${-cy}px)`;
       }
       const t = targetAt(p.x, p.y);
-      if (t?.kind !== last?.kind) { setTarget(t); last = t; }
+      if (t?.kind !== last?.kind || t?.label !== last?.label) { setTarget(t); last = t; }
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
@@ -144,8 +189,15 @@ export function Overworld({
       window.setTimeout(() => setNote(null), 3200);
       return;
     }
-    const err = garden.water();
-    if (err) { setNote(err); window.setTimeout(() => setNote(null), 2400); }
+    if (t.kind === "plant") { garden.plantSeed(t.x, t.y); return; }
+    if (t.kind === "tend") {
+      // Only meaningful while there is damage to mend -- a plant at full
+      // health set to "heal" would just stand still, which is a trap, not a
+      // choice.
+      const pl = garden.plants.find((q) => q.x === t.x && q.y === t.y);
+      if (pl && (pl.intent === "heal" || canHeal(pl))) garden.toggleIntent(t.x, t.y);
+      else garden.say("Nothing to mend — it will grow.");
+    }
   }, [garden, onLeave, onViewGardenState, targetAt]);
 
   useEffect(() => {
@@ -217,32 +269,36 @@ export function Overworld({
     return out;
   }, []);
 
-  /* ---- beds: the only layer that redraws, because it is the dashboard ---- */
-  const beds = useMemo(() => {
+  /* ---- what is growing: the only layer that redraws, because it IS the
+         dashboard. The patch starts as bare dirt; a tile only gets a bed
+         sprite once something is sown in it. ---- */
+  const grown = useMemo(() => {
     const out: React.ReactNode[] = [];
-    for (const plot of garden.plots) {
-      const key = plot.wilderness ? "wilderness" : bandFor(plot.water);
-      const spec = ART.beds[key];
-      for (let y = plot.y0; y <= plot.y1; y++) {
-        for (let x = plot.x0; x <= plot.x1; x++) {
-          const c = tileCentre(x, y);
-          const b = place(spec, c.px, c.py);
-          out.push(
-            <img key={`b${plot.id},${x},${y}`} src={url(spec.file)} alt=""
-              className={plot.mine ? "ig-bed ig-bed-mine" : "ig-bed"}
-              style={{ ...b, zIndex: depth(y + 0.45) }} />,
-          );
-        }
-      }
+    for (const pl of garden.plants) {
+      const spec = ART.beds[plantBand(pl)];
+      const sc = plantScale(pl);
+      const c = tileCentre(pl.x, pl.y);
+      // Scale about the ANCHOR, not the sprite's box, or a seedling floats.
+      const left = c.px - spec.anchor[0] * sc;
+      const top = c.py - spec.anchor[1] * sc;
+      out.push(
+        <img key={`p${pl.x},${pl.y}`} src={url(spec.file)} alt=""
+          className="ig-bed ig-bed-mine"
+          style={{
+            left, top, width: spec.size[0] * sc, height: spec.size[1] * sc,
+            zIndex: depth(pl.y + 0.45),
+          }} />,
+      );
+      out.push(<PlantPips key={`pip${pl.x},${pl.y}`} plant={pl} />);
     }
     return out;
-  }, [garden.plots]);
+  }, [garden.plants]);
 
   return (
     <div className="ig-viewport" ref={viewport} tabIndex={0} aria-label="The garden">
       <div className="ig-world" ref={world}>
         {ground}
-        {beds}
+        {grown}
         {scenery}
         <img ref={avatar} className="ig-avatar" alt="You" src={url(ART.avatar.s.file)}
           style={{ width: ART.avatar.s.size[0], height: ART.avatar.s.size[1] }} />

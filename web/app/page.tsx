@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Overworld } from "../components/world/Overworld";
 import { AdventureView } from "../components/world/AdventureView";
 import { Hud } from "../components/world/Hud";
+import { DevPanel } from "../components/world/DevPanel";
 import { ChallengeHost } from "../components/challenges/ChallengeHost";
 import type { ChallengeKey } from "../components/challenges/types";
 import { useGarden } from "../lib/world/useGarden";
@@ -75,7 +76,30 @@ export default function Home() {
           actually cost something rather than just look different. */}
       {!adventure && <Hud garden={garden} />}
 
-      <ChallengeHost which={challenge} onClose={close} onReward={garden.grantCistern} />
+      {/* Test harness. Gate this on an env flag before anyone plays. */}
+      <DevPanel garden={garden} />
+
+      {garden.note && <div className="ig-global-note">{garden.note}</div>}
+
+      {/* The commune filled. Deliberately anticlimactic: you are not told what
+          it did, only that the next one is bigger. */}
+      {garden.congrats !== null && (
+        <div className="ig-plane" role="dialog" aria-modal="true">
+          <div className="ig-plane-card">
+            <p className="ig-label">The commune</p>
+            <h2>Congratulations</h2>
+            <p>
+              The bar filled. Something happened, or nothing did — nobody has
+              said. The next one needs {garden.congrats}.
+            </p>
+            <button className="ig-btn" onClick={garden.dismissCongrats} autoFocus>
+              Back to the garden
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ChallengeHost which={challenge} onClose={close} onReward={garden.grantDust} />
     </main>
   );
 }
