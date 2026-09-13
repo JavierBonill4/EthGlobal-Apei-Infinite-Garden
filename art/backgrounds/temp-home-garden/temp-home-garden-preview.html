@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home garden — temp</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #0f1512; font-family: system-ui, sans-serif;
+  }
+
+  /* One window onto a garden bigger than the screen. Unlike the stroll view,
+     the CHARACTER moves and the camera follows -- you are standing in a place
+     here, not scrolling past one. */
+  #viewport { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+  /* The whole garden, scaled once. Everything inside is positioned in world
+     pixels, so nothing has to know about the zoom. */
+  #world {
+    position: absolute; top: 0; left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+  #world img {
+    position: absolute;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  /* A little bob while walking -- same trick the stroll preview uses, instead
+     of a walk-cycle animation. There are no walk frames in art/world/ yet. */
+  #avatar.walking { animation: bob 0.28s ease-in-out infinite; }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+
+  /* Real links, not JS-driven buttons -- navigation works even if the script
+     breaks. Same reasoning as garden-state-preview.html. */
+  #nav {
+    position: absolute; top: 14px; right: 14px; z-index: 50;
+    display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+  }
+  #nav a {
+    display: block;
+    color: #eaf1ec; text-decoration: none; font-size: 13px;
+    background: rgba(15, 21, 18, .62);
+    padding: 7px 12px; border-radius: 8px;
+    border: 1px solid rgba(234, 241, 236, .18);
+  }
+  #nav a:hover { background: rgba(15, 21, 18, .85); border-color: #7fe3c9; }
+
+  #hud {
+    position: absolute; top: 14px; left: 14px; z-index: 50;
+    color: #eaf1ec; font-size: 13px; line-height: 1.5;
+    background: rgba(15, 21, 18, .55);
+    padding: 8px 12px; border-radius: 8px;
+    pointer-events: none;
+  }
+  #hud b { color: #7fe3c9; }
+
+  /* Appears only when you are standing at something. Things in this garden are
+     not labelled until you walk up to them. */
+  #prompt {
+    position: absolute; left: 50%; bottom: 26px; z-index: 50;
+    transform: translateX(-50%);
+    color: #eaf1ec; font-size: 14px;
+    background: rgba(15, 21, 18, .72);
+    padding: 9px 14px; border-radius: 8px;
+    pointer-events: none; opacity: 0;
+    transition: opacity .16s ease;
+  }
+  #prompt.on { opacity: 1; }
+  /* Painted on the signpost, in world space, always readable. */
+  .signtag {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 9px;
+    letter-spacing: .02em;
+    color: #3b2a1d;
+    background: #d9bc8c;
+    border: 1px solid #a98a5e;
+    padding: 2px 5px;
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.25);
+    pointer-events: none;
+  }
+
+  /* Shown only while its exit is off-screen. */
+  .edgearrow {
+    position: absolute;
+    top: 50%;
+    z-index: 45;
+    transform: translateY(-50%);
+    color: #eaf1ec;
+    font-size: 12px;
+    background: rgba(15, 21, 18, .62);
+    border: 1px solid rgba(234, 241, 236, .18);
+    padding: 6px 9px;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  #prompt kbd {
+    font-family: ui-monospace, monospace; font-size: 12px;
+    border: 1px solid rgba(234,241,236,.35); border-bottom-width: 2px;
+    border-radius: 3px; padding: 0 4px; margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="world"></div>
+
+  <div id="nav">
+    <a href="../stroll/stroll-preview.html">→ Stroll view</a>
+    <a href="../garden-state/garden-state-preview.html">→ Garden State</a>
+  </div>
+
+  <div id="hud">
+    Walk with <b>WASD</b> or <b>arrows</b><br>
+    Walk to a signpost and press <b>Space</b>
+  </div>
+
+  <div id="prompt"></div>
+</div>
+
+<script>
+// ===========================================================================
+// HOME GARDEN -- temp
+//
+// This is home base: the view you start in, and the one you leave from. The
+// other two views are somewhere you GO, so both exits are roads with signposts
+// standing on them rather than menu items.
+//
+// Art is the existing tileset in art/world/ (referenced relatively, the same
+// way stroll-preview.html reaches for ../../world/avatar-*.svg). Nothing in
+// any art folder is modified by this file.
+//
+// TEMP, and the folder name says so: the real home garden gets painted art in
+// the watercolour register the other two views use. What is worth keeping when
+// that happens is the CAMERA and the layout below, not these placeholder
+// sprites.
+// ===========================================================================
+
+// ---- the camera -----------------------------------------------------------
+// Axis-aligned grid under a pitched camera -- NOT isometric. The grid is never
+// rotated; rows run left to right and a tile is a rectangle. tileH/tileW =
+// 0.625 IS the projection; there is no matrix anywhere. These two numbers are
+// baked into every ground tile in art/world/, so changing them here does not
+// change the camera, it just makes the art wrong. See art/ART.md.
+const TILE_W = 64;
+const TILE_H = 40;
+const SCALE  = 2;      // world pixels -> screen pixels
+const SPEED  = 3.2;    // world px per frame
+
+const ART = "../../world/";
+
+// Standing sprites declare an ANCHOR: the point in their own viewBox that
+// lands on the tile's ground centre. Copied from art/manifest.json -- if a
+// sprite hovers or sinks, this is the thing that is wrong, not the drawing.
+const S = (file, ax, ay, w, h) => ({ file, ax, ay, w, h });
+const SPR = {
+  bedThriving: S("bed-thriving.svg", 32, 28, 64, 48),
+  bedSteady:   S("bed-steady.svg",   32, 28, 64, 48),
+  bedStressed: S("bed-stressed.svg", 32, 28, 64, 48),
+  bedDying:    S("bed-dying.svg",    32, 28, 64, 48),
+  fenceH:      S("prop-fence-h.svg",    32, 22, 64, 26),
+  fenceV:      S("prop-fence-v.svg",    11, 42, 22, 62),
+  fencePost:   S("prop-fence-post.svg",  8, 22, 16, 26),
+  trough:      S("prop-trough.svg",     22, 24, 44, 30),
+  well:        S("prop-well.svg",       40, 88, 80, 100),
+  signpost:    S("prop-signpost.svg",   17, 48, 34, 50),
+  tree:        S("prop-tree.svg",       38, 92, 76, 98),
+  stone:       S("prop-stone.svg",      17, 20, 34, 24),
+};
+const AVATAR = { s: "avatar-s.svg", n: "avatar-n.svg", e: "avatar-e.svg", w: "avatar-w.svg" };
+
+// ---- the garden -----------------------------------------------------------
+const MAP_W = 14, MAP_H = 11;
+const LANE_Y = 8;
+
+// Your plot: 5x5, which is most of the frame at SCALE 2. One contract plot is
+// one walkable patch -- the 25 beds are a rendering of ONE plot, not 25.
+const PLOT = { x0: 4, y0: 2, x1: 8, y1: 6, gateX: 6 };
+
+// Central on the lane. It sat at x=10 and crowded the overlook signpost --
+// and the well is the commons, so it belongs in the middle of the road
+// rather than tucked beside an exit.
+const WELL     = { x: 9, y: LANE_Y };
+const TROUGH   = { x: 8,  y: 6 };
+const POND     = { x0: 12, y0: 0, x1: 13, y1: 1 };
+const TREES    = [ {x:1,y:1}, {x:2,y:5}, {x:12,y:4}, {x:13,y:9}, {x:0,y:10}, {x:11,y:1} ];
+const STONES   = [ {x:3,y:10}, {x:10,y:3}, {x:6,y:10} ];
+
+// The two ways out. Both are roads with a signpost on them, on the lane, and
+// neither is on your plot -- you leave home by walking off it.
+//
+// `short` is painted on the sign IN THE WORLD, always visible. The first pass
+// only named an exit once you were standing on it, which meant the only way to
+// find out where a road went was to walk down it -- and with both signposts
+// drawn from the same sprite, the second exit may as well not have existed.
+// A signpost that does not say where it goes is a post.
+//
+// x pulled inward from 1 and 12: at SCALE 2 a 1280px window shows about ten
+// tiles, so anything past x=11 starts off-screen from the spawn point.
+const EXITS = [
+  { x: 2,  y: LANE_Y, short: "the woodland", cairn: false,
+    label: "Take the trail into the woodland",
+    href: "../stroll/stroll-preview.html" },
+  { x: 11, y: LANE_Y, short: "the garden state", cairn: true,
+    label: "Climb to the overlook and read the garden",
+    href: "../garden-state/garden-state-preview.html" },
+];
+
+// Placeholder health per bed. TODO(wiring): one Plot struct, read from the
+// chain; the 5x5 is a rendering of its water band, not 25 independent values.
+const BAND_SPRITE = [SPR.bedThriving, SPR.bedSteady, SPR.bedStressed, SPR.bedDying];
+function bandAt(x, y) {
+  // Stable pseudo-random, weighted healthy. Deterministic so the garden looks
+  // the same every time you open the file.
+  const h = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+  return h > 0.74 ? 1 : h > 0.93 ? 2 : 0;
+}
+
+function groundAt(x, y) {
+  if (x >= POND.x0 && x <= POND.x1 && y >= POND.y0 && y <= POND.y1) return "tile-water.svg";
+  if (y === LANE_Y) return "tile-path.svg";
+  if (x >= PLOT.x0 && x <= PLOT.x1 && y >= PLOT.y0 && y <= PLOT.y1) return "tile-soil.svg";
+  return (x * 7 + y * 13) % 5 === 0 ? "tile-grass-worn.svg" : "tile-grass.svg";
+}
+
+// ---- fences, and the edges they block -------------------------------------
+// Generated together from the plot rect so the thing you can SEE and the thing
+// you can WALK THROUGH cannot drift apart. Two separate lists is how a demo
+// ends up walking through a fence.
+const fences = [];
+const blockedEdges = new Set();
+(function buildFences() {
+  const edge = (x, y, side) => blockedEdges.add(x + "," + y + "," + side);
+  for (let x = PLOT.x0; x <= PLOT.x1; x++) {
+    fences.push({ s: SPR.fenceH, x, y: PLOT.y0, dx: 0, dy: -0.5 });
+    edge(x, PLOT.y0, "n"); edge(x, PLOT.y0 - 1, "s");
+    if (x !== PLOT.gateX) {                    // the gate is a hole in both
+      fences.push({ s: SPR.fenceH, x, y: PLOT.y1, dx: 0, dy: 0.5 });
+      edge(x, PLOT.y1, "s"); edge(x, PLOT.y1 + 1, "n");
+    }
+  }
+  for (let y = PLOT.y0; y <= PLOT.y1; y++) {
+    fences.push({ s: SPR.fenceV, x: PLOT.x0, y, dx: -0.5, dy: 0 });
+    edge(PLOT.x0, y, "w"); edge(PLOT.x0 - 1, y, "e");
+    fences.push({ s: SPR.fenceV, x: PLOT.x1, y, dx: 0.5, dy: 0 });
+    edge(PLOT.x1, y, "e"); edge(PLOT.x1 + 1, y, "w");
+  }
+  fences.push({ s: SPR.fencePost, x: PLOT.x0, y: PLOT.y0, dx: -0.5, dy: -0.5 });
+  fences.push({ s: SPR.fencePost, x: PLOT.x1, y: PLOT.y0, dx: 0.5, dy: -0.5 });
+})();
+
+const solid = new Set();
+for (let y = POND.y0; y <= POND.y1; y++)
+  for (let x = POND.x0; x <= POND.x1; x++) solid.add(x + "," + y);
+TREES.forEach(t => solid.add(t.x + "," + t.y));
+STONES.forEach(s => solid.add(s.x + "," + s.y));
+solid.add(WELL.x + "," + WELL.y);
+EXITS.forEach(e => solid.add(e.x + "," + e.y));
+
+// Beds are walkable: you stand between the rows to tend them.
+function solidAt(x, y) {
+  if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return true;
+  return solid.has(x + "," + y);
+}
+function edgeBlocked(x, y, side) { return blockedEdges.has(x + "," + y + "," + side); }
+
+// ---- build the scene once -------------------------------------------------
+const worldEl = document.getElementById("viewport").querySelector("#world");
+worldEl.style.width  = (MAP_W * TILE_W) + "px";
+worldEl.style.height = (MAP_H * TILE_H) + "px";
+
+function img(src, left, top, w, h, z, cls) {
+  const el = document.createElement("img");
+  el.src = ART + src;
+  el.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;z-index:${z}`;
+  if (cls) el.id = cls;
+  el.draggable = false;
+  worldEl.appendChild(el);
+  return el;
+}
+
+// Painter's order from world y. Depth in this camera is ONLY occlusion --
+// walking behind a tree has to hide you or the ground reads as a floor with
+// stickers on it. z-index off y does that sort for free, every frame, without
+// re-sorting anything.
+const depth = (worldY) => Math.round(worldY * 100) + 1000;
+
+// ground
+for (let y = 0; y < MAP_H; y++) {
+  for (let x = 0; x < MAP_W; x++) {
+    img(groundAt(x, y), x * TILE_W, y * TILE_H, TILE_W, TILE_H, 0);
+  }
+}
+// beds -- inside the fence only
+for (let y = PLOT.y0; y <= PLOT.y1; y++) {
+  for (let x = PLOT.x0; x <= PLOT.x1; x++) {
+    const sp = BAND_SPRITE[bandAt(x, y)];
+    img(sp.file, (x + 0.5) * TILE_W - sp.ax, (y + 0.5) * TILE_H - sp.ay,
+        sp.w, sp.h, depth(y + 0.45));
+  }
+}
+// standing things
+function stand(sp, x, y, dx, dy) {
+  const gx = (x + 0.5 + (dx || 0)) * TILE_W;
+  const gy = (y + 0.5 + (dy || 0)) * TILE_H;
+  return img(sp.file, gx - sp.ax, gy - sp.ay, sp.w, sp.h, depth(y + (dy || 0) + 0.5));
+}
+fences.forEach(f => stand(f.s, f.x, f.y, f.dx, f.dy));
+TREES.forEach(t => stand(SPR.tree, t.x, t.y));
+STONES.forEach(s => stand(SPR.stone, s.x, s.y));
+stand(SPR.well, WELL.x, WELL.y);
+stand(SPR.trough, TROUGH.x, TROUGH.y, 0, 0.2);
+EXITS.forEach(e => {
+  // A stone beside the overlook post, so the two exits are not the same
+  // picture. No new art -- it is prop-stone.svg, nudged off the post.
+  if (e.cairn) stand(SPR.stone, e.x, e.y, 0.34, 0.18);
+  stand(SPR.signpost, e.x, e.y);
+
+  const tag = document.createElement("div");
+  tag.className = "signtag";
+  tag.textContent = e.short;
+  tag.style.left = ((e.x + 0.5) * TILE_W) + "px";
+  tag.style.top = ((e.y + 0.5) * TILE_H - 66) + "px";
+  tag.style.zIndex = depth(e.y + 0.5) + 1;
+  worldEl.appendChild(tag);
+});
+
+// the player
+const avatarEl = img(AVATAR.s, 0, 0, 34, 54, 9999, "avatar");
+
+// ---- movement -------------------------------------------------------------
+const pos = { x: PLOT.gateX + 0.5, y: PLOT.y1 + 1.6 };   // just outside your gate
+let facing = "s";
+const keys = {};
+window.addEventListener("keydown", e => {
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+  keys[k] = true;
+  if (e.key === " " || k === "e") act();
+});
+window.addEventListener("keyup",  e => { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; });
+window.addEventListener("blur",   () => { for (const k in keys) keys[k] = false; });
+
+// Axis-separated, so sliding along a fence feels right instead of sticking.
+function passable(fromX, fromY, toX, toY) {
+  const fx = Math.floor(fromX), fy = Math.floor(fromY);
+  const tx = Math.floor(toX),   ty = Math.floor(toY);
+  if (fx === tx && fy === ty) return true;
+  if (solidAt(tx, ty)) return false;
+  if (tx !== fx) return !edgeBlocked(fx, fy, tx > fx ? "e" : "w");
+  return !edgeBlocked(fx, fy, ty > fy ? "s" : "n");
+}
+
+const RADIUS = 0.22;
+const promptEl = document.getElementById("prompt");
+
+// One edge marker per exit, in the VIEWPORT rather than the world -- they are
+// a property of the window, not of the garden.
+const arrowEls = EXITS.map(() => {
+  const el = document.createElement("div");
+  el.className = "edgearrow";
+  el.style.display = "none";
+  document.getElementById("viewport").appendChild(el);
+  return el;
+});
+let nearExit = null;
+
+// Generous on purpose. A signpost is solid, so you stand BESIDE it, and you
+// usually approach along the row under the lane rather than the lane itself --
+// at a tight radius you end up shuffling about hunting for the trigger, which
+// reads as a broken signpost rather than a hidden one. Nothing is hidden here:
+// home base should be easy to leave.
+const EXIT_REACH = 1.8;
+function exitNear(x, y) {
+  for (const e of EXITS) {
+    if (Math.hypot(e.x + 0.5 - x, e.y + 0.5 - y) < EXIT_REACH) return e;
+  }
+  return null;
+}
+function act() { if (nearExit) window.location.href = nearExit.href; }
+
+function tick() {
+  let dx = 0, dy = 0;
+  if (keys.ArrowUp    || keys.w) dy -= 1;
+  if (keys.ArrowDown  || keys.s) dy += 1;
+  if (keys.ArrowLeft  || keys.a) dx -= 1;
+  if (keys.ArrowRight || keys.d) dx += 1;
+
+  const moving = dx !== 0 || dy !== 0;
+  if (moving) {
+    // Facing follows the dominant axis: a sprite flickering between two
+    // facings on a diagonal reads as broken, not as detail.
+    facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "e" : "w") : (dy > 0 ? "s" : "n");
+    const m = Math.hypot(dx, dy) || 1;
+    const stepX = (dx / m) * (SPEED / TILE_W);
+    const stepY = (dy / m) * (SPEED / TILE_H);
+    const nx = pos.x + stepX;
+    if (passable(pos.x, pos.y, nx + Math.sign(stepX) * RADIUS, pos.y)) pos.x = nx;
+    const ny = pos.y + stepY;
+    if (passable(pos.x, pos.y, pos.x, ny + Math.sign(stepY) * RADIUS)) pos.y = ny;
+    pos.x = Math.max(RADIUS, Math.min(MAP_W - RADIUS, pos.x));
+    pos.y = Math.max(RADIUS, Math.min(MAP_H - RADIUS, pos.y));
+  }
+
+  if (avatarEl.getAttribute("src") !== ART + AVATAR[facing]) avatarEl.src = ART + AVATAR[facing];
+  avatarEl.classList.toggle("walking", moving);
+  // Anchor [17,50] = the feet. The avatar is a BILLBOARD: never squashed by
+  // the camera, so the player stands UP out of the ground plane.
+  avatarEl.style.left = (pos.x * TILE_W - 17) + "px";
+  avatarEl.style.top  = (pos.y * TILE_H - 50) + "px";
+  avatarEl.style.zIndex = depth(pos.y);
+
+  // Camera follows, then clamps so the garden never shows void at the edges.
+  const vp = document.getElementById("viewport");
+  const vw = vp.clientWidth / SCALE, vh = vp.clientHeight / SCALE;
+  // (cx/cy below are also read by the off-screen exit markers further down.)
+  const cx = Math.min(Math.max(pos.x * TILE_W - vw / 2, 0), Math.max(0, MAP_W * TILE_W - vw));
+  const cy = Math.min(Math.max(pos.y * TILE_H - vh / 2, 0), Math.max(0, MAP_H * TILE_H - vh));
+  worldEl.style.transform = `scale(${SCALE}) translate(${-cx}px, ${-cy}px)`;
+
+  // Point at any exit that is off-screen. Moving them inward helps at 1280px
+  // and does nothing at 900px -- the window is the variable, so the fix has to
+  // answer to the window rather than to the map.
+  for (let i = 0; i < EXITS.length; i++) {
+    const ex = EXITS[i];
+    const screenX = ((ex.x + 0.5) * TILE_W - cx) * SCALE;
+    const arrow = arrowEls[i];
+    if (screenX < 30) {
+      arrow.style.display = "block";
+      arrow.style.left = "10px";
+      arrow.style.right = "auto";
+      arrow.textContent = "\u2190 " + ex.short;
+    } else if (screenX > vp.clientWidth - 30) {
+      arrow.style.display = "block";
+      arrow.style.right = "10px";
+      arrow.style.left = "auto";
+      arrow.textContent = ex.short + " \u2192";
+    } else {
+      arrow.style.display = "none";
+    }
+  }
+
+  const e = exitNear(pos.x, pos.y);
+  if (e !== nearExit) {
+    nearExit = e;
+    promptEl.classList.toggle("on", !!e);
+    if (e) promptEl.innerHTML = "<kbd>Space</kbd>" + e.label;
+  }
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>

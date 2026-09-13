@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 560" width="700" height="560" role="img" aria-label="Foreground trunks">
+  <!-- NEAR parallax layer, drawn IN FRONT of the player. Occlusion is the -->
+  <!--        depth cue — there is no perspective maths in the Adventure view either. -->
+  <defs><filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="5" result="t"/><feColorMatrix in="t" type="saturate" values="0" result="g"/><feComponentTransfer in="g" result="a"><feFuncA type="table" tableValues="0 0.2"/></feComponentTransfer><feComposite in="a" in2="SourceGraphic" operator="in"/></filter><filter id="soft" x="-15%" y="-15%" width="130%" height="130%"><feGaussianBlur stdDeviation="0.6"/></filter></defs>
+  <g id="a" filter="url(#soft)">
+    <path d="M122 -10 C120 196 130 392 122 570 L158 570 C160 392 150 196 152 -10 Z" fill="var(--ig-w-wood-3,#411F14)"/>
+    <path d="M355 -10 C354 196 370 392 359 570 L401 570 C406 392 390 196 391 -10 Z" fill="var(--ig-w-wood-3,#411F14)"/>
+    <path d="M582 -10 C582 196 596 392 586 570 L634 570 C638 392 624 196 624 -10 Z" fill="var(--ig-w-wood-3,#411F14)"/>
+  </g>
+  <use href="#a" filter="url(#grain)"/>
+</svg>

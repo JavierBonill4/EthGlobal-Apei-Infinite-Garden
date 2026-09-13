@@ -6,8 +6,9 @@ import {
   ART, TILE_H, TILE_W, depth, place, tileCentre, url,
 } from "../../lib/world/camera";
 import {
-  ALL_FENCES, MAP_H, MAP_W, PORTALS, SIGNPOST, STONES, TREES,
+  ALL_FENCES, EXITS, MAP_H, MAP_W, STONES, TREES,
   TROUGH, WELL, PLAYER_START, edgeBlocked, groundAt, plotAt, solidAt,
+  type Exit,
 } from "../../lib/world/map";
 import { bandFor } from "../../lib/world/mechanics";
 import type { Garden } from "../../lib/world/useGarden";
@@ -20,7 +21,7 @@ type Facing = "n" | "s" | "e" | "w";
 export type Target =
   | { kind: "water"; label: string }
   | { kind: "well"; label: string }
-  | { kind: "portal"; label: string; challenge: "connect" | "tilt" }
+  | { kind: "exit"; label: string; exit: Exit }
   | null;
 
 /** Solid tile, or a fence on the edge we are crossing. Axis-separated so
@@ -36,11 +37,15 @@ function passable(fromX: number, fromY: number, toX: number, toY: number) {
 
 export function Overworld({
   garden,
-  onEnterPortal,
+  onLeave,
+  onViewGardenState,
   frozen,
 }: {
   garden: Garden;
-  onEnterPortal: (c: "connect" | "tilt") => void;
+  /** Walk out to the woodland. Not a portal: a road. */
+  onLeave: () => void;
+  /** The overlook. Opens the standalone Garden State preview. */
+  onViewGardenState: () => void;
   frozen: boolean;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -58,8 +63,12 @@ export function Overworld({
   const targetAt = useCallback((x: number, y: number): Target => {
     const near = (a: { x: number; y: number }, r = 1.15) =>
       Math.hypot(a.x + 0.5 - x, a.y + 0.5 - y) < r;
-    for (const p of PORTALS) {
-      if (near(p, 0.9)) return { kind: "portal", label: "Step through", challenge: p.challenge };
+    // Generous radius on purpose. A signpost is solid, so you stand BESIDE it,
+    // and you usually approach along the row under the lane rather than the
+    // lane itself. At a tight radius you end up shuffling about hunting for
+    // the trigger, which reads as a broken signpost rather than a hidden one.
+    for (const e of EXITS) {
+      if (near(e, 1.8)) return { kind: "exit", label: e.label, exit: e };
     }
     if (near(WELL, 1.3)) return { kind: "well", label: "Read the well" };
     const plot = plotAt(Math.floor(x), Math.floor(y));
@@ -125,7 +134,11 @@ export function Overworld({
   const act = useCallback(() => {
     const t = targetAt(pos.current.x, pos.current.y);
     if (!t) return;
-    if (t.kind === "portal") { onEnterPortal(t.challenge); return; }
+    if (t.kind === "exit") {
+      if (t.exit.to === "woodland") onLeave();
+      else onViewGardenState();
+      return;
+    }
     if (t.kind === "well") {
       setNote(`The well holds ${Math.round(garden.well).toLocaleString()} units. Everyone draws from this one.`);
       window.setTimeout(() => setNote(null), 3200);
@@ -133,7 +146,7 @@ export function Overworld({
     }
     const err = garden.water();
     if (err) { setNote(err); window.setTimeout(() => setNote(null), 2400); }
-  }, [garden, onEnterPortal, targetAt]);
+  }, [garden, onLeave, onViewGardenState, targetAt]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -184,10 +197,23 @@ export function Overworld({
     ALL_FENCES.forEach((f, i) => put(`f${i}`, ART.props[f.kind], f.x, f.y, f.dx, f.dy));
     TREES.forEach((t, i) => put(`t${i}`, ART.props.tree, t.x, t.y));
     STONES.forEach((s, i) => put(`s${i}`, ART.props.stone, s.x, s.y));
-    put("sign", ART.props.signpost, SIGNPOST.x, SIGNPOST.y);
     put("well", ART.props.well, WELL.x, WELL.y);
     put("trough", ART.props.trough, TROUGH.x, TROUGH.y, 0, 0.2);
-    PORTALS.forEach((p, i) => put(`p${i}`, ART.portal, p.x, p.y));
+    EXITS.forEach((e, i) => {
+      // A stone beside the overlook post, so the two exits are not the same
+      // picture. No new art -- prop-stone.svg, nudged off the post.
+      if (e.cairn) put(`cairn${i}`, ART.props.stone, e.x, e.y, 0.34, 0.18);
+      put(`exit${i}`, ART.props.signpost, e.x, e.y);
+    });
+    EXITS.forEach((e, i) => {
+      const c = tileCentre(e.x, e.y);
+      out.push(
+        <span key={`sign${i}`} className="ig-signtag"
+          style={{ left: c.px, top: c.py - 66, zIndex: depth(e.y + 0.5) + 1 }}>
+          {e.short}
+        </span>,
+      );
+    });
     return out;
   }, []);
 
